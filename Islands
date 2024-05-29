@@ -1,0 +1,152 @@
+let vMaxDate = vToday*2
+;
+tCalendar:
+LOAD RowNo() AS DateNum AUTOGENERATE ($(vMaxDate))
+;
+Qualify *
+;
+iCalendar:
+Load  
+	DateNum,
+	Date(DateNum)																						as Date,  
+	Year(DateNum)																						as Year,
+	'Q' & ceil(num(Month(DateNum))/3)																	as Quarter,
+	Month(DateNum)																						as Month,  
+	week(DateNum)																						as Week,
+	Day(DateNum)																						as Day,  
+	date(monthstart(DateNum), 'MMM-YYYY')																as MonthYear,  
+	Week(weekstart(DateNum)) & '-' & WeekYear(DateNum)													as WeekYear,  
+	WeekDay(DateNum)																					as WeekDay,
+	DateNum-'$(vToday)'																					as DateDiff,
+	((Year(DateNum)-Year('$(vToday)'))*12)+(Month(DateNum)-Month('$(vToday)'))							as MonthDiff,
+	((Year(DateNum)-Year('$(vToday)'))*4)+(ceil(num(Month(DateNum))/3)-ceil(num(Month('$(vToday)'))/3))	as QtrDiff,
+	Year(DateNum)-Year('$(vToday)') 																	as YearDiff 
+Resident tCalendar
+;
+Unqualify *
+;
+Drop Table tCalendar;
+;
+
+ErrorTypes:
+LOAD * INLINE [_ErrorTypeCode, ErrorType  
+1,	Missing FTM
+2,	Missing FTM comments
+3,	Missing Baseline date  and not on time
+4,	Baseline<Launch date & on time
+5,	Missing On time launch
+6,	Missing Reason for delay
+7,	Missing Reason for delay comments
+8,	Missing In full
+9,	Missing In full comments
+10, Missing Actual quantity delivered
+11, Missing Reason for reduced/esceeding quantities
+12, Missing Launch probability
+13, Missing Commercial success
+14, Missing Commercial success comments
+
+15, Missing/Expired Launch date
+16, Expired Launch date
+17, Missing IP Earliest
+18, Missing Livery
+19, Missing Country Mfg. Site
+20, Missing Country packaging site
+21, Missing Country test site
+22, Missing Country release site
+23, Missing Submissions
+24, Missing Day 0
+25, Missing Day 70
+26, Missing Day 105
+27, Missing Day 106
+28, Missing Day 180
+29, Missing Day 210
+30, Missing Approval (EOP)
+31, Missing Approval
+32, Expired Submissions
+33, Expired Day 0
+34, Expired Day 70
+35, Expired Day 105
+36, Expired Day 106
+37, Expired Day 180
+38, Expired Day 210
+39, Expired Approval (EOP)
+40, Expired Approval
+41, Missing MARS
+42, 1st Submission later than MARS
+43, Missing Project status
+44, Missing Business
+45, Missing Project type
+46, Missing Portfolio project manager
+47, Missing Project progress
+48, Missing Manufacturing Sites
+49, Missing Packaging Sites
+50, Missing Testing Sites
+51, Missing Release Sites
+52, Missing Consolidated RAWPs
+53, Missing Consolidated CLWPs
+54, Change project status to Completed
+55, Change project status to Active
+56, Misalignment on RAWP/CLWP consolidated status
+
+57, Missing Gain
+58, Missing Description
+59, Missing ROA/Form
+59.1, Missing ROA
+59.2, Missing Form
+60, Missing ATC1
+61, Missing Strengths/UOM
+62, Missing Origin of Material
+
+63, Missing Product status
+64, Missing/Expired Watch Expiry Date
+65, Review AFP status
+66, Missing Non-NCE/NME
+
+//below added by M.Jacobs 2018-Jun-19
+67, Missing Main Indication
+69, Mistakes in Project MS-submission batch
+70, Mistakes in Project MS-bio start
+71, Mistakes in Project MS-final bio report
+72, Mistakes in Project MS-submission date
+
+73, Missing IP Earliest (No value)
+74, Missing IP Earliest (Upload table value)
+75, Misaligned IP Earliest (PLM value/No table value)
+76, Misaligned IP Earliest (Upload table value)
+
+77, Missing Innovator Brand Name
+78, Missing Innovator Company
+79, Missing Innovator Code
+80, Missing BU (EU Only)
+
+81, Missing Kick-off Date Flag
+82, Expired Kick-off Date Flag
+83, Mistakes in Project MS- kick off date
+
+84, Link on Summary Task
+85, Late Start/Finish
+86, Duplicated Protocol Number
+88, Missing Major Milestones for Development countries
+89, Major Milestones with duration different than zero
+90, Missing Regions
+91, Missing Estimated Number Of Sites
+92, Missing Sample Size
+93, Missing Protocol Number
+94, Missing Arms
+87, Missing Protocol Approval (PSO)
+95, Missing Screening Initiated (FPS)
+96, Missing First Patient In (Enrolled - FPI)
+97, Missing Last Patient In (Enrolled - LPI)
+98, Missing Last Patient Last Visit (LPLV)
+99, Missing Database Lock (DBLock)
+100, Missing CSR Approval & Delivered (CSR)
+101, Too Long Protocol Number
+102, Missing Project Description, Project Status, Development countries
+103, Speciality Activity Type is not indicated for reportable activites and milestones.
+
+104, Missing IP Latest (No value)
+105, Missing IP Latest (Upload table value)
+106, Misaligned IP Latest (PLM value/No table value)
+107, Misaligned IP Latest (Upload table value)
+
+];
