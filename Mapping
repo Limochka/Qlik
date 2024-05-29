@@ -1,0 +1,58 @@
+MapFlags:
+MAPPING 
+LOAD key, dual(value,key) INLINE [key,value
+1, Yes
+0,
+];
+
+MapReg_PDT_Strength_Status:
+MAPPING 
+LOAD * INLINE [key, value
+Historic, 0
+Not Interested, 0
+Commercial, 0
+Terminated, 0
+];
+
+MapReg_PJT_Status:
+MAPPING 
+LOAD * INLINE [key, value
+Completed, 0
+Cancelled, 0
+];
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+Map  [REG_PDT.Missing Main Indication]
+	,[REG_PDT.Review AFP Status]
+	,[REG_PDT.Missing Product Status]
+	,[REG_PDT.Missing/Expired Watch Expiry Date]
+	,[REG_PDT.Missing Non-NCE/NME]
+	,[REG_PDT.Missing PLMD (No value)]
+	,[REG_PDT.Missing PLMD (Upload table value)]
+	,[REG_PDT.Misaligned PLMD (PLM value/No table value)]
+	//,[somebs REG_PDT.Misaligned PLMD (Upload table value)]
+	,[REG_PDT.Missing BU (EU Only)]
+	,[REG_PDT.Missing Innovator Company]
+	,[REG_PDT.Missing Innovator Brand Name]
+    ,[WP.Missing FTM Flag]
+	,[WP.Missing FTM Comments Flag]
+	,[WP.Missing On-Time Launch Flag]
+	,[WP.Missing Reason for Delay Flag]
+	,[WP.Missing Reason for Delay Comments Flag]
+	,[WP.Missing Launch Probability Flag]
+	,[WP.Mising Launch Date Flag]
+	,[WP.Missing Launch Date Flag]
+	,[WP.Missing Livery Flag]
+	,[WP.Missing Packaging Site Flag]
+	,[WP.Missing MFG Site Flag]
+	,[WP.Missing Day0 Flag]
+	,[WP.Missing Livery Day 106 Flag]
+	,[WP.Missing Approval EOP date Flag]
+	,[WP.Missing Approval Flag]
+	,[WP.Missing Submission Date Flag]
+    ,[PJT.Missing Kick-off Date Flag]
+	,[PJT.Expired Kick-off Date Flag]
+Using MapFlags;
