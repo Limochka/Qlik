@@ -1,0 +1,6 @@
+
+[TGO_SEGMENT]:
+LOAD
+	MFG_SITES 		AS 	[PJT.Manufacturing Sites]
+, 	TGO_SEGMENT   	AS  [TGO.TGO segmnent]
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_TGO_SEGMENT.QVD] (qvd);
