@@ -1,0 +1,315 @@
+NullAsValue [_SA_PJT_GROUP],[_SA_DEV_SITE],[_SA_MFG_SITE],[_Region_Country],[_Region], [_SA_PLP_SITE];
+NullValue='<ANY>';
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+KeyTableTemp:
+Load Distinct 
+[_SKU.KEY],
+[_PACK.KEY],
+[_WP.KEY],
+[_SKU_Lync.PROJECT_KEY]			as [_PROJECT_KEY],
+[_SKU_Lync.REGION_COUNTRY_KEY]	as [_REGION_COUNTRY_KEY] //added for reg_pdt and wp connection for europe
+resident SKU_Lync;
+// Guy 20_11_2017
+drop table SKU_Lync;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Temp:
+load Distinct
+[_PROJECT_KEY],
+[_PJT.PRODUCT_KEY]				as [_PRODUCT_KEY],
+[_PJT.REGION_COUNTRY_KEY]		as [T_REGION_COUNTRY_KEY]
+//[_PJT.REGION_COUNTRY_KEY]		as [_REGION_COUNTRY_KEY]
+RESIDENT PROJECT;
+
+//////////////////////////////////////////////////////////////////
+t0:
+Load Distinct [_PROJECT_KEY]
+
+	,'Combination Projects' as [_SA_PJT_GROUP]
+Resident PROJECT 
+Where 
+wildmatch([PJT.Project Rationale], '*Combination product*') >0;
+
+//[PJT.Project Rationale] = 'Combination Products';
+Concatenate
+Load Distinct [_PROJECT_KEY]
+	,'BD Projects' as [_SA_PJT_GROUP]
+Resident PROJECT 
+Where Match([PJT.Project type],'In-Licensing','In-Licensing with Local Bio/ CDP / Zone IV stability by Teva');
+Concatenate
+Load Distinct [_PROJECT_KEY]
+	,'TAPI Projects' as [_SA_PJT_GROUP]
+Resident PROJECT 
+Where [PJT.TAPI Y/N] = 'Y';
+//Amend on Talya request by Olga Voloshchuk on March 2021
+Concatenate
+Load Distinct [_PROJECT_KEY]
+	,'Make VS Buy  projects' as [_SA_PJT_GROUP]
+Resident PROJECT 
+where
+[PJT.Operations allocation status]='Make Vs Buy'
+
+;
+//Amend by Olga Voloshchuk - dditional sites which currently are not in the IDM menu: Release +testing+ packaging on Talya req for Superna
+Concatenate
+Load Distinct [_PROJECT_KEY]
+	,'CMO & external sites (Non DEV/MNF)' as [_SA_PJT_GROUP]
+Resident [PJT_SITES (Non DEV/MNF)]
+where
+wildmatch([PJT.Site.Value (Non DEV/MNF)], 'x *') >0
+
+
+or 
+wildmatch([PJT.Site.Value (Non DEV/MNF)], 'Contract Manufacturing') >0
+
+
+;
+// End Amend by Olga Voloshchuk - dditional sites which currently are not in the IDM menu: Release +testing+ packaging on Talya req for Superna
+
+t:
+Load 
+	Distinct [_PROJECT_KEY] 
+    Resident PROJECT; 
+Left Join Load [_PROJECT_KEY],[_SA_PJT_GROUP] 
+Resident t0; Drop Table t0;
+Left Join(Temp) Load [_PROJECT_KEY],UPPER([_SA_PJT_GROUP]) as [_SA_PJT_GROUP] Resident t; Drop Table t;
+
+//////////////////////////////////////////////////////////////////
+t:
+Load Distinct
+1278							as [T_REGION_COUNTRY_KEY],
+[_CNTRY.REGION_COUNTRY_KEY]		as [_REGION_COUNTRY_KEY]
+Resident COUNTRY_REGION
+Where [CNTRY.Region Name] = 'Europe';
+Concatenate(t)
+Load Distinct
+[_CNTRY.REGION_COUNTRY_KEY]		as [T_REGION_COUNTRY_KEY],
+[_CNTRY.REGION_COUNTRY_KEY]		as [_REGION_COUNTRY_KEY]
+Resident COUNTRY_REGION
+Where [_CNTRY.REGION_COUNTRY_KEY] <> 1278;
+
+Left Join(Temp)
+Load [T_REGION_COUNTRY_KEY], [_REGION_COUNTRY_KEY]
+Resident t; Drop Table t;
+
+//////////////////////////////////////////////////////////////////
+Left Join(Temp)
+Load [_PROJECT_KEY],
+	//[PJT.Manufacturing Site (single value)] as [_SA_MFG_SITE] - 20210226 - QC10322 - Dmytro Isaiev:
+    //Updated on 01/01/2023 for Tamar request to combine x- sites with Contract manufacturing
+	if(wildmatch([PJT.Manufacturing Site (single value)], 'x *') >0 or [PJT.Manufacturing Site (single value)]='Contract Manufacturing' , 'All external manuf sites/contract manufacturing', [PJT.Manufacturing Site (single value)] ) as [_SA_MFG_SITE]
+Resident [PJT/Manufacturing Sites]
+Where LEN([PJT.Manufacturing Site (single value)])>0;
+
+Left Join(Temp)
+Load [_PROJECT_KEY],
+	//[PJT.Development Site (single value)] as [_SA_DEV_SITE] - 20210226 - QC10322 - Dmytro Isaiev:
+	if(wildmatch([PJT.Development Site (single value)], 'x *') >0, 'all external DEV sites', [PJT.Development Site (single value)]) as [_SA_DEV_SITE]
+Resident [PJT/Development Sites]
+Where LEN([PJT.Development Site (single value)])>0;
+
+
+
+//////////////////////////////////////////////////////////////////
+join(KeyTableTemp)
+Load [_PROJECT_KEY]
+	,[_PRODUCT_KEY] as [_PRODUCT_KEY_TEMP]
+    ,[_REGION_COUNTRY_KEY]
+    ,[_SA_PJT_GROUP]
+    ,[_SA_DEV_SITE]
+    ,[_SA_MFG_SITE]
+    
+Resident Temp; Drop Table Temp;
+
+//adding PLP Projects
+Left Join(KeyTableTemp)
+Load [_PROJECT_KEY],
+   Upper([PJT.PLP Project Y/N]) as [_SA_PLP_PROJECT_TEMP] 
+	Resident PROJECT;
+//Adding product keys for PLP IM projects
+left join (KeyTableTemp)
+load Distinct
+[_PROJECT_KEY],
+[_PJT.PRODUCT_KEY]				as [_PRODUCT_KEY_TEMP1]
+
+RESIDENT PROJECT
+where Upper([PJT.PLP Project Y/N])='Y'
+;
+NoConcatenate
+KeyTableTemp1:
+Load
+
+*
+,
+if (IsNull([_PRODUCT_KEY_TEMP]),[_PRODUCT_KEY_TEMP1],[_PRODUCT_KEY_TEMP]) as [_PRODUCT_KEY]
+Resident KeyTableTemp;
+Drop Fields [_PRODUCT_KEY_TEMP1], [_PRODUCT_KEY_TEMP];
+Drop Table KeyTableTemp;
+Rename Table KeyTableTemp1 to KeyTableTemp;
+//Adding product keys for PLP IM projects
+//Section Access for PLP Sites
+Left Join(KeyTableTemp)
+Load [_PROJECT_KEY],
+	
+	if(wildmatch([PJT.PLP Site single value], 'x *') >0  or [PJT.PLP Site single value]='Contract Manufacturing', 'All external manuf sites/contract manufacturing', [PJT.PLP Site single value] ) as [_SA_PLP_SITE]
+Resident [PJT/PLP Site]
+Where LEN([PJT.PLP Site single value])>0;
+
+
+//Section Access for PLP Sites
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Join(KeyTableTemp)
+load Distinct [_REG_PDT.KEY], 
+[_Reg_PDT.PRODUCT_KEY]			as [_PRODUCT_KEY],
+[_Reg_PDT.REGION_COUNTRY_KEY]	as [_REGION_COUNTRY_KEY]
+Resident FACT_REG_PDT;
+
+Join(KeyTableTemp)
+load Distinct [_IND.KEY],
+[_IND.KEY]					as [_INDICATION_KEY],
+[_IND.PRODUCT_KEY]			as [_PRODUCT_KEY],
+[_IND.REGION_COUNTRY_KEY]	as [_REGION_COUNTRY_KEY]
+Resident INDICATION;
+
+/*Join(KeyTableTemp)
+load Distinct [_API.KEY], 
+[_API.PROJECT_KEY]			as [_PROJECT_KEY]
+Resident API_SUPPLIER_N_N_BI;*/
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Join(KeyTableTemp)
+Load Distinct [_PDT.KEY],
+[_PDT.KEY]						as [_PRODUCT_KEY]
+Resident PRODUCT;
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+JOIN(KeyTableTemp)
+LOAD Distinct [_LBE_MBI.KEY],
+[_LBE.SKU.KEY]					as [_SKU.KEY], 
+[_LBE.ORGANIZATION_KEY]			as [_ORGANIZATION_KEY]
+RESIDENT FACT_LBE;
+
+JOIN(KeyTableTemp)
+LOAD Distinct [_LBE_MBI.KEY],
+[_MBI.SKU.KEY]					as [_SKU.KEY], 
+[_MBI.ORGANIZATION_KEY]			as [_ORGANIZATION_KEY]
+RESIDENT FACT_MBI_MEASURES;
+
+*//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Left Join(KeyTableTemp)
+Load Distinct
+[_CNTRY.REGION_COUNTRY_KEY],
+[_CNTRY.REGION_COUNTRY_KEY]		as [_REGION_COUNTRY_KEY], 
+[CNTRY.Country Code]			as [_Region_Country], 
+Upper([CNTRY.Region Name BI])	as [_Region]
+Resident COUNTRY_REGION;
+
+Left Join(KeyTableTemp)
+Load Distinct
+	[_ORG.ORGANIZATION_KEY],
+    [_ORG.ORGANIZATION_KEY]		as [_ORGANIZATION_KEY],
+    [_ORG.REGION_COUNTRY_KEY]	as [_REGION_COUNTRY_KEY]
+Resident ORGANIZATION;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+KeyTable1:
+Load *
+     ,if(len([_SA_PLP_PROJECT_TEMP])<1 or IsNull([_SA_PLP_PROJECT_TEMP]),'N',[_SA_PLP_PROJECT_TEMP]) as [_SA_PLP_PROJECT]
+  
+Resident KeyTableTemp;
+
+DROP TABLE KeyTableTemp;
+Drop Field _SA_PLP_PROJECT_TEMP;
+NoConcatenate
+KeyTableTemp:
+Load *
+, if ([_SA_PLP_PROJECT]='N' and [_Region]='SPECIALTY' ,'Specialty Global development projects',[_SA_PJT_GROUP]) as [_SA_PJT_GROUP1]
+
+,if ([_SA_PLP_PROJECT]='Y',[_SA_PLP_SITE],[_SA_MFG_SITE]) as [_SA_MFG_SITE1]
+
+Resident KeyTable1;
+Drop table KeyTable1;
+
+Drop Fields [_SA_MFG_SITE], [_SA_PLP_SITE],[_SA_PJT_GROUP];
+Rename Field [_SA_MFG_SITE1] to [_SA_MFG_SITE];
+Rename Field [_SA_PJT_GROUP1] to [_SA_PJT_GROUP];
+
+
+Concatenate (KeyTableTemp)
+Load Distinct
+
+[_CNTRY.REGION_COUNTRY_KEY],
+[_IND.KEY],
+[_INDICATION_KEY],
+[_ORG.ORGANIZATION_KEY],
+[_ORGANIZATION_KEY],
+[_PACK.KEY],
+[_PDT.KEY],
+[_PRODUCT_KEY],
+[_PROJECT_KEY],
+[_REG_PDT.KEY],
+[_Region],
+[_Region_Country],
+[_REGION_COUNTRY_KEY],
+[_SA_DEV_SITE],
+[_SA_MFG_SITE],
+
+[_SA_PLP_PROJECT],
+[_SKU.KEY],
+[_WP.KEY],
+'Pipeline projects (PJT)' as [_SA_PJT_GROUP]
+
+Resident KeyTableTemp
+where 
+[_Region]<>'SPECIALTY' and [_SA_PLP_PROJECT]<>'Y'
+;
+
+Concatenate (KeyTableTemp)
+Load Distinct
+
+[_CNTRY.REGION_COUNTRY_KEY],
+[_IND.KEY],
+[_INDICATION_KEY],
+[_ORG.ORGANIZATION_KEY],
+[_ORGANIZATION_KEY],
+[_PACK.KEY],
+[_PDT.KEY],
+[_PRODUCT_KEY],
+[_PROJECT_KEY],
+[_REG_PDT.KEY],
+[_Region],
+[_Region_Country],
+[_REGION_COUNTRY_KEY],
+[_SA_DEV_SITE],
+[_SA_MFG_SITE],
+
+[_SA_PLP_PROJECT],
+[_SKU.KEY],
+[_WP.KEY],
+'Pipeline (PJT) and Post launch (PLP)' as [_SA_PJT_GROUP]
+
+Resident KeyTableTemp
+where 
+[_Region]<>'SPECIALTY' 
+;
+
+
+
+
+
+KeyTable:
+Load *
+    
+	,[_PRODUCT_KEY] &'_'&[_ORGANIZATION_KEY] as [_LBE_MBI.KEY]
+	,UPPER([_SA_PJT_GROUP] &'|'& [_SA_DEV_SITE] &'|'& [_SA_MFG_SITE] &'|'& [_Region_Country] &'|'& [_Region]&'|'&[_SA_PLP_PROJECT]) AS _AuthID //2018-12-18, RSYSIUK
+Resident KeyTableTemp;
+Drop table KeyTableTemp;
