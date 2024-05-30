@@ -1,0 +1,677 @@
+PROJECT:
+LOAD 
+K_DEVELOPMENT_SITE						as [_PJT.DEVELOPMENT_SITE_KEY]
+,K_MFG_SITES							as [_PJT.MFG_SITES_KEY]
+,K_PRODUCT								as [_PJT.PRODUCT_KEY]
+,REGION_COUNTRY_KEY						as [_PJT.REGION_COUNTRY_KEY]
+,K_PROJECT								as [_PJT.KEY]
+,K_PROJECT								as [_PROJECT_KEY]
+,ACTAVIS_PROJECT_ID as [PJT.Actavis Project ID]
+,ALLOCATION_COMMITEE_STATUS as [PJT.Allocation committee status]
+,ANALYTICAL_MANAGER as [PJT.Analytical manager]
+,ANDA_NUMBER as [PJT.ANDA number]
+,ANDA_PROC_NUMB as [PJT.ANDA/ Procedure no. (Concatenation of all RA WP)]
+,APPLICATION_NUMBER as [PJT.Application number]
+,APPLICATION_TYPE as [PJT.Application Type]
+,APPROVAL_TO_CLINICAL as [PJT.1st Approval to proceed to clinical study]
+,APPROVED as [PJT.The file hAS been Approved by the regulatory authorities]
+,B_ALLOC_CHANGED as [PJT.Allocation Changed]
+,B_FIRST_TO_FILE as [PJT.First to file (GM)]
+,B_IS_SPECIALTY_PROJECT as [PJT.Is a Specialty Project?]
+,B_PJT_MGT_MEETING as [PJT.Project Management Meeting]
+,BD_MANAGER as [PJT.Bd manager]
+,BENCH_PRECLINICAL_POC as [PJT.PTRS Benchmark Preclinical/POC Stage]
+,BENCH_PTRS_LOA as [PJT.PTRS Benchmark LOA For Current Progress]
+,BENCH_PTRS_PH_I as [PJT.PTRS Benchmark Ph1]
+,BENCH_PTRS_PH_II as [PJT.PTRS Benchmark Ph2]
+,BENCH_PTRS_PH_III as [PJT.PTRS Benchmark Ph3]
+,BENCH_PTRS_SUBMISSION as [PJT.PTRS Benchmark Submission]
+,BIO_STRATEGY as [PJT.Bio Clinical Strategy]
+,BIOCLINICAL_PROJECT_MANAGER as [PJT.BioClinical project manager]
+,BIWEEKLY_REPORT_COMMENTS as [PJT.Bi-weekly report comments]
+,BUDGET_COMMENT_CAPEX as [PJT.Budget Comment Capex]
+,BUSCASE_CAPEX as [PJT.Business Case Capex]
+,BUSINESS as [PJT.Business]
+,CAPEX_ESTIMATION as [PJT.Commercial Capex(K$)]
+,CAPEX_PJT_DESC as [PJT.Capex Project Desc]
+,CAPEX_YTOT as [PJT.Commercial Total]
+,CMAT_CU as [PJT.CMAT_CU]
+,CMAT_EACHES as [PJT.CMAT_EACHES]
+,CMAT_K_UN as [PJT.CMAT_K_UN]
+,COM_CAPEX_Y1 as [PJT.Commercial Y1]
+,COM_CAPEX_Y10 as [PJT.Commercial Y10]
+,COM_CAPEX_Y2 as [PJT.Commercial Y2]
+,COM_CAPEX_Y3 as [PJT.Commercial Y3]
+,COM_CAPEX_Y4 as [PJT.Commercial Y4]
+,COM_CAPEX_Y5 as [PJT.Commercial Y5]
+,COM_CAPEX_Y6 as [PJT.Commercial Y6]
+,COM_CAPEX_Y7 as [PJT.Commercial Y7]
+,COM_CAPEX_Y8 as [PJT.Commercial Y8]
+,COM_CAPEX_Y9 as [PJT.Commercial Y9]
+,COMMERCIAL_UPDATES as [PJT.Commercial updates]
+,COMMITMENT_NOTE as [PJT.Commitment Notes]
+,COMMITMENT_YEAR as [PJT.Commitment Year]
+,date(D_1ST_DAY_0) as [PJT.Day 0]
+,date(D_1ST_DAY_105) as [PJT.Day 105]
+,date(D_1ST_DAY_106) as [PJT.Day 106]
+,date(D_1ST_FILE_CANCELLED) as [PJT.1st File Cancelled]
+,date(D_1ST_PRE_LAUNCH_VARIATION) as [PJT.1st Pre Launch Variation]
+,date(D_1ST_PROJECT_CREATED) as [PJT.Project created]
+,date(D_1ST_REFUSE_TO_RECEIVE) as [PJT.1st Refuse to receive]
+,date(D_1ST_REJECTED) as [PJT.1st Rejected]
+,date(D_1ST_TENTATIVE_APPROVAL) as [PJT.1st Tentative Approval]
+,date(D_1ST_VARIATION_APPROVAL) as [PJT.1st Variation Approval]
+,date(D_ALLOCATION_COMMITEE) as [PJT.Allocation committee date]
+,date(D_CREATION) as [PJT.Creation date]
+,date(D_DEV_ALLOCATION_STATUS) as [PJT.Development allocation status date]
+,date(D_DOSSIER_COMPLETE) as [PJT.1st Dossier Complete date]
+// 2020-04-06 DISAIEV added a prefix PJT for the next field
+,date(D_DUE_DATE_DUAL_USE_CER_APP) as [PJT.Due Date For Dual Use CER Approval]
+,date(D_ENDORSMENT) as [PJT.Endorsement Date] 
+,date(D_FDA_ACCEPTANCE) as [PJT.1st FDA acceptance]
+,date(D_FINAL_PIVOTAL_REPORT) as [PJT.Final Pivotal Report Date]
+,date(D_FIRST_APPROVAL) as [PJT.1st Approval date]
+,date(D_FIRST_KICK_OFF_MEETING) as [PJT.1st Kick-off meeting Date]
+,date(D_FIRST_LAUNCH) as [PJT.1st Launch Date] 
+,date(D_FIRST_PIVOTAL_DOSING) as [PJT.1st First Pivotal Dosing Date]
+,date(D_FIRST_SUBMISSION) as [PJT.1st Submission Date] 
+,date(D_FORFEITURE) as [PJT.Forfeiture date]
+,date(D_IMS_CMAT) as [PJT.IMS_CMAT_DATE]
+,date(D_LFC_APPROVED) as [PJT.1st LFC approved]
+,date(D_MARS) as [PJT.MARS]
+,date(D_SAVED_ON_MFG_SITE) as [PJT.Saved On Maunfacturing Site]
+,date(D_ON_HOLD_DUE) as [PJT.On hold due date]
+,date(D_OPERATIONS_ALLOC_STATUS) as [PJT.Operations allocation status date]
+,date(D_PDT_IMS_CMAT) as [PJT.MAT Date]
+,date(D_PILOT_STUDIES_START) as [PJT.Pilot Studies Start Date]
+,date(D_PJT_LSD) as [PJT.LSD]
+,date(D_PJT_MGT_MEETING) as [PJT.Project Management Meeting Date]
+,date(D_PRELIM_RES_LAST_PIVOTAL_FULL) as [PJT.1st 100% QC date]
+,date(D_SELECTION) as [PJT.Selection Date] 
+,date(D_STABILITY) as [PJT.1st Stability]
+//,date(D_STABILITY_COMPLETE) as [PJT.Stability Complete date]
+,date(D_STABILITY_COMPLETE) as [PJT.1st stability finish]
+,date(D_SUBMISSION_BATCH) as [PJT.1st Manufacture Submission Batches]
+,date(D_TECHNICAL_FILE_SENT) as [PJT.1st Submission File sent to submitter]
+,date(D_TLD) as [PJT.1st TLD]
+,date(D_VALIDATION_START) as [PJT.Validation start date]
+,date(D_WITHDRAWN) as [PJT.1st Withdrawn]
+// 2020-04-06 DISAIEV added a prefix PJT for the next field
+,date(DUE_DATE_COM_CER_APPR) as [PJT.Due Date For Commercial CER Approval]
+,DEV_ALLOCATION_REASON as [PJT.Dev allocation reason]
+,DEV_ALLOCATION_STATUS as [PJT.Development allocation status]
+,DEVELOPMENT_COUNTRIES as [PJT.Development Countries]
+,DEVELOPMENT_SITE as [PJT.Development site]
+,DUAL_USE_CAPEX as [PJT.Dual Use Capex]
+,DUAL_USE_CAPEX_Y1 as [PJT.Dual Use Y1]
+,DUAL_USE_CAPEX_Y10 as [PJT.Dual Use Y10]
+,DUAL_USE_CAPEX_Y2 as [PJT.Dual Use Y2]
+,DUAL_USE_CAPEX_Y3 as [PJT.Dual Use Y3]
+,DUAL_USE_CAPEX_Y4 as [PJT.Dual Use Y4]
+,DUAL_USE_CAPEX_Y5 as [PJT.Dual Use Y5]
+,DUAL_USE_CAPEX_Y6 as [PJT.Dual Use Y6]
+,DUAL_USE_CAPEX_Y7 as [PJT.Dual Use Y7]
+,DUAL_USE_CAPEX_Y8 as [PJT.Dual Use Y8]
+,DUAL_USE_CAPEX_Y9 as [PJT.Dual Use Y9]
+,DUAL_USE_CAPEX_YTOT as [PJT.Dual Use Total]
+,EXCLUDE_FROM_STR_APP as [PJT.exclude_from_str_app]
+,EXCLUSIVITY_STATUS as [PJT.Exclusivity status (US)]
+,EXT_UNITS as [PJT.EXT_UNITS]
+,F_EXCLUSIVITY_STATUS_US				as [PJT.EXCLUSIVITY_STATUS_FLAG_US]
+,F_EXPIRED_KICK_OFF_DATE				as [PJT.Expired Kick-off Date Flag]
+,F_FIRST_SUBM_LATR_THAN_MARS			as [PJT.1st Submission later than MARS flag]
+,F_FIRST_SUBMISSION_DATE				as [PJT.FIRST_SUBMISSION_DATE_FLAG]
+,F_MISSING_FIRST_LAUNCH_DATE			as [PJT.LaunchDateNull_flag]
+,F_LAUNCHES_ACTUALS						as [PJT.LAUNCHES_ACTUALS_FLAG]
+,F_MISSING_MANUFACTURING_SITE			as [PJT.MANUFACTURING_SITE_FLAG]
+,F_MISSING_BUSINESS						as [PJT.Missing business flag]
+,F_MISSING_KICK_OFF_DATE				as [PJT.Missing Kick-off Date Flag]
+,F_MISSING_MARS_DATE					as [PJT.Missing MARS Date flag]
+,F_MISSING_MFG_SITE						as [PJT.Missing manufacturing site flag]
+,F_MISSING_PACK_SITE					as [PJT.Missing pack site flag]
+,F_MISSING_PROGRESS						as [PJT.Missing project progress flag]
+,F_MISSING_STATUS						as [PJT.Missing project status flag]
+,F_MISSING_TYPE							as [PJT.Missing project type flag]
+,F_MISSING_PORTFOLIO_MANAGER			as [PJT.Missing portfolio project manager flag]
+,F_MISSING_RELEASE_SITES				as [PJT.Missing release site flag]
+,F_MISSING_TEST_SITES					as [PJT.Missing test site flag]
+,F_MISTAKES_BIO_START					as [PJT.MISTAKES_BIO_START_FLAG]
+,F_MISTAKES_FINAL_BIO_REPORT			as [PJT.MISTAKES_FINAL_BIO_RPT_FLAG]
+,F_MISTAKES_STABILTY_DATE				as [PJT.MISTAKES_STABILTY_DATE_FLAG]
+,F_MISTAKES_SUB_BATCH_DATE				as [PJT.MISTAKES_SUB_BATCH_DATE_FLAG]
+,F_MISTAKES_SUBMISSION_DATE				as [PJT.MISTAKES_SUBMISSION_DATE_FLAG]
+,F_MISSING_PROJECT_MANAGER				as [PJT.PROJECT_MANAGERS_FLAG]
+,F_MISSING_SEGMENT						as [PJT.SegmentNull_flag]
+,F_MISSING_FIRST_SUBM_DATE				as [PJT.SubmDateNull_flag]
+,F_SUBMISSIONS_ACTUAL					as [PJT.SUBMISSIONS_ACTUALS_FLAG]
+,F_MISSING_BIO_STRATEGY					as [PJT.BIO_STRATEGY_FLAG]
+,F_MISSING_BIWEEKLY_COMMENTS			as [PJT.BIWEEKLY_COMMENTS_FLAG]
+,F_MISSING_DEVELOPMENT_SITE				as [PJT.DEVELOPMENT_SITE_FLAG]
+,FIRST_APPROVAL as [PJT.1st Approval A/P]
+,FIRST_LAUNCH as [PJT.1st Launch A/P]
+,FIRSTPIVOTALDOSINGDATE_1ST_PF as [PJT.First Pivotal dosing date Finish]
+,GLOBAL_FINANCIAL_CODE as [PJT.Global Financial Code]
+,GPMS_DOCUNID as [PJT.GPMS DOCUNID]
+,IMS_KG as [PJT.IMS_KG]
+,IND_PROGRESS_BRAND_STATUS_EU as [PJT.EU Progress brand status (regional innovator)]
+,IND_PROGRESS_BRAND_STATUS_US as [PJT.US Progress brand status (regional innovator)]
+,INDICATION as [PJT.Main indication]
+,IP_OWNER_VALUE as [PJT.IP Owner]
+,IS_A_DEV_PROJECT as [PJT.Is a dev project ?]
+,IS_AN_OTC as [PJT.Is an OTC Project]
+,IS_FOR_GBS_IMPEX as [PJT.Is for GBS interface (PLW_GBS_EXPORT_V) ?]
+,IS_FOR_HYPERION_IMPEX as [PJT.Is for hyperion interface (PLW_GBS_EXPORT_V) ?]
+// 2020-04-06 DISAIEV added a prefix PJT for the next field
+,LATE_LAUNCH as [PJT.Launch latest]
+,LATEST_PRJ_HIGHLIGHT as [PJT.Latest project highlight]
+,LAUNCH_MGT_EX_SUM as [PJT.Launch Management Executive Summary]
+//Renamed on Tamar's req.TASK02495643
+//,LAUNCH_PLMD_COUNTRIES_MAIN as [PJT.PLMD main (countries)]
+,LAUNCH_PLMD_COUNTRIES_MAIN as [PJT.IP Earliest - Main (Countries)]
+//Renamed on Tamar's req.TASK02495643
+//,LAUNCH_PLMD_EARLY_COUNTRIES as [PJT.PLMD early (countries)]
+,LAUNCH_PLMD_EARLY_COUNTRIES as [PJT.IP Earliest - Early (Countries)]
+
+,LAUNCH_STATUS as [PJT.Launch risk]
+,LAUNCH_STRATEGY_COMMENTS as [PJT.Launch strategy comments]
+,LAUNCH_TYPE as [PJT.Launch Type]
+//,LEGAL_PJT_MEMBER as [PJT.Legal contact person]
+,LICENSOR_NAME as [PJT.Licensor name]
+//rename on Talya req 01122021
+,LMD_DESC as [PJT.IP Latest comments]
+//rename on talya req 01122021
+,LMD_EARLY_2 as [PJT.IP Latest - early]
+,LOCAL_PROJECT_CODE as [PJT.Local Project Code]
+,MANUF_SUB_BATCHES_1ST_PF as [PJT.Manufacture Submission Batches 1st Finish]
+,MARKET_ENTRY as [PJT.Market Entry (FTM)]
+// 2020-04-06 DISAIEV added a prefix PJT for the next field
+,MARKET_IN_SCOPE as [PJT.Markets In Scope]
+,MASTER_DOSAGE_FORM as [PJT.Master dosage form]
+//,MEDIS_REL as [PJT.Medis Relevance]
+,MFG_ALLOCATION_COMMENTS as [PJT.Mfg Allocation comments]
+,MFG_ALLOCATION_REASON as [PJT.Mfg allocation reason]
+,MFG_PRO_EQUIPMENT_TRAIN as [PJT.MFG Process Equipment Train]
+,MFG_SITES as [PJT.Manufacturing Sites]
+,MUST_WIN as [PJT.Must win]
+,N_CRYSTALINE_FORM as [PJT.Crystaline form]
+,N_PROJECT_POS as [PJT.Project PoS (1-100%) ]
+,NO_BIO_STUDY_REQUIRED as [PJT.No Bio Study Required]
+,ONB as [PJT.Internal number]
+,OPERATIONS_ALLOCATION_STATUS as [PJT.Operations allocation status]
+,OTC_FRANCHISE as [PJT.OTC franchise]
+,PACK_ALLOCATION_REASON as [PJT.Pack allocation reason]
+,PACK_SITES as [PJT.Packaging Sites]
+,PDCT_FILL_V_UOM as [PJT.Global Product| Fill volume UOM]
+,PDCT_STRENGTH_FILL_V_UOM as [PJT.Strength/ F. Volume UOM]
+,PDCT_STRENGTH_UOM as [PJT.Global Product| Strength UOM]
+,PDT_INNOV_BRAND_NAME as [PJT.Innovator Brand name]
+,PDT_PLFD_DESC as [PJT.PLFD description]
+,PDT_WBS_ONB as [PJT.Product WBS ONB]
+,PHARMA_MANAGER as [PJT.Pharma manager]
+,PHASE_I_ALLOC_REASON as [PJT.Phase I Allocation Reason]
+,PHASE_I_SITE as [PJT.Phase I Production Sites]
+,PHASE_II_ALLOC_REASON as [PJT.Phase II Allocation Reason]
+,PHASE_II_SITE as [PJT.Phase II Production Sites]
+,PHASE_III_ALLOC_REASON as [PJT.Phase III Allocation Reason]
+,PHASE_III_SITE as [PJT.Phase III Production Sites]
+,PILOT_STUDIES_START_DATE_A_P as [PJT.Pilot Studies Start Date A/P]
+,PIPELINE_MANAGER as [PJT.Pipeline Manager]
+//renamed on Talya request 01122021
+,PLMD_EARLY as [PJT.IP Earliest - early]
+,PLMD_EARLY_MAIN as [PJT.PLMD main]
+,PMAT_CU as [PJT.PMAT_CU]
+,PMAT_EACHES as [PJT.PMAT_EACHES]
+,PMAT_EXT_UNITS as [PJT.PMAT_EXT_UNITS]
+,PMAT_K_UN as [PJT.PMAT_K_UN]
+,PMAT_SALE_KDOL as [PJT.PMAT_SALE_KDOL]
+,PORTFOLIO_MANAGER as [PJT.Portfolio Project Manager]
+,PRECLINICAL_POC as [PJT.PTRS Preclinical/POC Stage]
+// 2020-10-02 KBODNAR Removed next field
+//,PRJ_GLOBAL_PDT_TECH as [PJT.Global product technology]
+//Renamed on Tamar's req.TASK02495643
+//,PRJ_LMD_EARLY_COUNTRIES as [PJT.LMD early (countries)]
+,PRJ_LMD_EARLY_COUNTRIES as [PJT.IP Latest - Early (Countries)]
+//Renamed on Tamar's req.TASK02495643
+//,PRJ_LMD_EARLY_COUNTRIES_MAIN as [PJT.LMD main (countries)]
+,PRJ_LMD_EARLY_COUNTRIES_MAIN as [PJT.IP Latest - Main (Countries)]
+,PRJ_LMD_EARLY_MAIN as [PJT.LMD main]
+,PRJ_SOURCE_PRJ as [PJT.Source project ID]
+,PRJ_SUB_PLFD_EARLY as [PJT.PLFD early]
+,PROD_DESCRIPTION as [PJT.Product Description]
+,PRODUCT as [PJT.Product]
+,PRODUCT_DOSAGE_FORM as [PJT.Product dosage form]
+,PRODUCT_FTF as [PJT.Product Strength | FTF]
+,PRODUCT_HANDLING_CATEGORY as [PJT.Product Handling category]
+,PRODUCT_LABEL as [PJT.Product label]
+,PRODUCT_STATUS as [PJT.Product | Status]
+,PROGRESS as [PJT.Progress]
+,PROJECT_CODE as [PJT.Project Code]
+,PROJECT_LICENSEE as [PJT.Licensee]
+,PROJECT_NAME as [PJT.Project Name]
+,PROJECT_POS_COMMENTS as [PJT.Project PoS Comments]
+,PROJECT_RATIONALE as [PJT.Project Rationale]
+,PROJECT_STR_FV_FTF as [PJT.Project FTF]
+,PROJECT_TECHNOLOGY as [PJT.Project Technology]
+,PROJECT_TYPE as [PJT.Project type]
+,PROMOTION_PLAN as [PJT.Promotion plan]
+,PTLD as [PJT.1st PTLD]
+,PTRS_LOA as [PJT.PTRS LOA Based On Current Progress]
+,PTRS_PH_I as [PJT.PTRS Ph1]
+,PTRS_PH_II as [PJT.PTRS Ph2]
+,PTRS_PH_III as [PJT.PTRS Ph3]
+,PTRS_SUBMISSION as [PJT.PTRS Submission]
+,PV_LAUNCH_DRIVER as [PJT.Launch driver]
+,PV_NON_NME_NCE as [PJT.Non-NCE/NME]
+,RA_CONTACT as [PJT.RA contact]
+,RA_STRAT_COMMENTS as [PJT.RA comments]
+,RA_STRAT_FILING_STRAT as [PJT.Project filing strategy for impex]
+,RATIONALE_COMMENTS as [PJT.Project rationale comments]
+,RECEIVING_SITE as [PJT.Receiving Site]
+,REG_COMMENTS as [PJT.Regulatory comments]
+,REG_COUNTRY_PRODUCT as [PJT.regional or country product related to project]
+,REGIONAL_LAUNCH_MANAGER as [PJT.Regional launch manager]
+,REGISTRATION_TYPE as [PJT.Registration Type]
+,RELEASE_ALLOCATION_REASON as [PJT.Release allocation reason]
+,RELEASE_SITES as [PJT.Release Sites]
+,RLD_AVAILABILITY as [PJT.RLD Availability]
+,RLD_STRENGTHS as [PJT.RLD Strengths]
+,RND_ACTION_ITEMS as [PJT.R&D Action Items]
+,RND_PROJECT_MANAGER as [PJT.R&D Project Manager]
+,S_1ST_DAY_0 as [PJT.Day 0 A/P]
+,S_1ST_DAY_105 as [PJT.Day 105 A/P]
+,S_1ST_DAY_106 as [PJT.Day 106 A/P]
+,S_1ST_FILE_CANCELLED as [PJT.1st File Cancelled A/P]
+,S_1ST_PRE_LAUNCH_VARIATION as [PJT.1st Pre Launch Variation A/P]
+,S_1ST_PTLD as [PJT.1st PTLD A/P]
+,S_1ST_REFUSE_TO_RECEIVE as [PJT.1st Refuse to receive A/P]
+,S_1ST_REJECTED as [PJT.1st Rejected A/P]
+,S_1ST_TENTATIVE_APPROVAL as [PJT.1st Tentative Approval A/P]
+,S_1ST_TLD as [PJT.1st TLD A/P]
+,S_1ST_VARIATION_APPROVAL as [PJT.1st Variation Approval A/P]
+,S_APPROVAL_TO_CLINICAL as [PJT.1st Approval to proceed to clinical study A/P]
+,S_APPROVED as [PJT.The file hAS been Approved by the regulatory authorities A/P]
+,S_DOSSIER_COMPLETE_DATE as [PJT.1st Dossier Complete date A/P]
+,S_EXPENSE_DEFINITION as [PJT.Reimbursement type]
+,S_FDA_ACCEPTANCE as [PJT.1st FDA acceptance A/P]
+,S_FINAL_PIVOTAL_REPORT_DATE as [PJT.Final Pivotal Report Date A/P]
+,S_FIRST_KICK_OFF_MEETING as [PJT.1st Kick-off meeting Date A/P]
+,S_FIRST_PIVOTAL_DOSING as [PJT.1st First Pivotal Dosing Date A/P]
+,S_FIRST_SUBMISSION as [PJT.1st Submission A/P]
+,S_FIRSTPIVOTALDOSING_DATE_PF as [PJT.First Pivotal dosing date Finish 1st A/P]
+,S_GEN_OPS_RA_NOTES as [PJT.Gen OPS RA Notes]
+,S_LFC_APPROVED as [PJT.1st LFC approved A/P]
+,S_MANUF_SUB_BATCHES_1ST_PF as [PJT.Manufacture Submission Batches 1st Finish A/P]
+,S_OPS_DOSAGE_TYPE as [PJT.Ops dosage type]
+,S_PRELIM_RES_LAST_PIVOTAL_FULL as [PJT.1st 100% QC date A/P]
+,S_PRJ_LIST_COUNTRIES_LAUNCH as [PJT.List of countries (launch)]
+,S_RD_GNPI_COMMENTS as [PJT.R&D - GNPI Comments]
+,S_STABILITY as [PJT.1st Stability A/P]
+//,S_STABILITY_COMPLETE as [PJT.Stability Complete date A/P]
+,S_STABILITY_COMPLETE as [PJT.1st stability finish A/P]
+,S_SUBMISSION_BATCH as [PJT.1st Manufacture Submission Batches A/P]
+,S_SUBMISSION_BATCH_MAN as [PJT.1st Submission Batch Manuf. Started A/P]
+,S_TECH_FILE_SENT as [PJT.1st Submission File sent to submitter A/P]
+,S_WITHDRAWN as [PJT.1st Withdrawn A/P]
+,S_YEAR_FTF_CONFIRMED as [PJT.Year FTF Confirmed]
+,SALES_KDOL as [PJT.SALES_KDOL]
+,SALES_KEUR as [PJT.SALES_KEUR]
+,SALES_KLC as [PJT.SALES_KLC]
+,SEGMENT as [PJT.Segment]
+,SENDING_SITE as [PJT.Sending Site]
+,SENIOR_PROJECT_LEADER as [PJT.Project Leader]
+,SITE_LAUNCH_MANAGER as [PJT.Site launch manager]
+,SITE_TRANSFER as [PJT.Site transfer]
+,SP_PROJECT_ATTRIBUTES as [PJT.Project Attributes]
+,SP_PROJECT_NAME as [PJT.Specialty Project Name]
+,SPECIFIC_CAPEX_REQ as [PJT.Specific Capex Required]
+,STATUS as [PJT.Status]
+,STD_UN as [PJT.STD_UN]
+,STR_FILL_V_UOM_DISPLAY2 as [PJT.Strengths (Fill volumes + UOMs) UOMs]
+,STRATEGY_COMMENTS as [PJT.Strategy summary]
+,STRATEGY_NPV as [PJT.NPV]
+,STRENGTHS_FILL_VOLUMES as [PJT.Strengths-Fill volumes]
+,SUB_BATCH_MFG_SITE as [PJT.Sub. Batch Mfg. site]
+,SUB_PACK_CONF_OR_PACK as [PJT.Submission Packaging CONF OR PACK]
+,SUBMISSION as [PJT.Submission]
+,SUBMISSION_COMMITMENT as [PJT.Submission Commitment]
+,SUBMISSION_RISK as [PJT.Submission Risk]
+,SUBMISSION_RISK_NOTES as [PJT.Submission Risk Notes]
+,SUBMISSION_TYPE as [PJT.Submission type]
+,SUPPLIER_NAME as [PJT.Supplier name]
+,T_LEGAL as [PJT.Legal Comments]
+,T_SPECIAL_REQ_COM as [PJT.Special requirments/comments]
+,TAPI_API as [PJT.TAPI Y/N]
+,TARGET_PRJ as [PJT.Target project(s) ID]
+,TEST_ALLOCATION_REASON as [PJT.Test allocation reason]
+,TEST_SITES as [PJT.Testing Sites]
+,THERAPEUTIC_CLASS as [PJT.Product Therapeutic class ATC1]
+,TOTAL_PRJ_VARIABLE_BUDGET as [PJT.Business case Total project variable budget]
+,TPO_REGION as [PJT.TPO Region ]
+,TRACE_COMMENT_NOTEPAD as [PJT.information]
+,TRI_WEEKLY_RA_NOTES as [PJT.Tri-weekly RA notes]
+,TRI_WEELY_STATUS as [PJT.Tri-weekly Status]
+,VALIDATION_NOTES as [PJT.Validation Notes]
+,D_YEAR_1_CAPEX as [PJT.Year 1 Capex]
+,NO_OF_BATCHES	as [PJT.NO OF BATCHES]
+,NPI_COMMENTS	as [PJT.NPI COMMENTS]
+,STABILITY_ZONE	as [PJT.Stability Zones]
+,PLANNED_SHELF_LIFE	as [PJT.Planned Shelf Life On Launch]
+,BRAND_PACK_CONF	as [PJT.Brand Package Configuration]
+,MEDIS_RELEVANCE	as [PJT.Medis Relevance]
+,NON_STD_PRODUCT	as [PJT.Nonstandard product]
+,NOT_COUNTED_LAUNCH as [PJT.Notcounted launch]
+// added by O.Voloshchuk on 17/02/2021
+
+
+,TPO_COMMENTS as [PJT.Site/TPO comments]
+//added by O.Voloshchuk
+,GAIN_N_N as [PJT.GAIN (n-n)]
+,IS_IN_SOURCE_SYSTEM as [_PJT.IS_IN_SOURCE_SYSTEM]
+//added only to use in GAIN to API report in Control app
+, PRJ_GAIN as [_PJT.PRJ_GAIN]
+//added on 2021-05-18 by Olga Voloshchuk
+,PACKAGING_NOTES as [PJT.Production and packaging comments]
+//Use this field for EU project req. from Anastasia fro R&D
+,STRAT_FILING_EU as [PRJ.Strat Filing EU]
+//2021-06-31 Olga Voloshchuk                  added PRODUCT_STRATEGY_MANAGER in Project for HiH Npi report
+,PRODUCT_STRATEGY_MANAGER as [PRJ.Product Strategy Manager]
+//added by o.Voloshchuk on 20210805 to add in the R&D Generic report
+ ,HIH_INITIATION_A_OR_P as [PJT.HiH Initiation Date A/P] 
+ ,date(HIH_INITIATION) as [PJT.HiH Initiation Date]
+ ,HANDOVER_A_OR_P as [PJT.Handover Date A/P]
+ ,date (HANDOVER)       as [PJT.Handover Date]   
+ //added by O.Voloshchuk on 27082021 on req for Anasatsia 
+ ,date (TARGET_VAL_MFG_START) as [PJT.Target Validation Manufacture Start Date]
+ ,date ( PROCESS_DESIGN_MFG_START) as [PJT.Process Design Manufacture Start Date]
+ ,date(API_ORDER_FOR_VALIDATION) as [PJT.API Order for Validation and Launch Build Date]
+ ,VALIDATION_MFG_START_A_P as [PJT.Target Validation Manufacture Start A/P]
+ ,PROCESS_DESIGN_MFG_AP as [PJT.Process Design Manufacture Start A/P]
+ ,API_ORDER_FOR_VAL_A_P as [PJT.API Order for Validation and Launch Build A/P]
+ //added by O.Voloshchuk on 27082021 on req for Anasatsia
+ //added by O.Voloshchuk on 04122021 on Nimrod req. TGO report
+ ,SITE_TPO_LAUNCH_MANAGER as [PJT.Site/TPO launch manager],
+ //added PLP fields by Olga Voloshchuk 01-12-2022
+PRJ_OVERVIEW			as		[PJT.PLP Project Overview],
+TGO_SEG_SEND_SITE			as		[PJT.PLP TGO Segment (Sending Site)],
+TGO_SEG_REC_SITE			as		[PJT.PLP TGO Segment (Receiving Site)],
+PLP_MARKET_REG_SKU			as		[PJT.PLP Market Region],
+PLP_MARKET_SKU			as		[PJT.PLP Markets],
+EMSO_REGION			as		[PJT.PLP EMSO Region],
+SENDING_MFG_SITE			as		[PJT.PLP Sending Mfg Site],
+RECEI_MFG_SITE			as		[PJT.PLP Receiving Mfg Site],
+PLP_SEND_PRIM_PKG_SITE			as		[PJT.PLP Sending Primary Pkg Site],
+PLP_SEND_SEC_PKG_SITE			as		[PJT.PLP Sending Secondary Pkg Site],
+RECEI_PRIM_PKG_SITE			as		[PJT.PLP Receiving Primary Pkg Site],
+PLP_RECEI_SEC_PKG_SITE			as		[PJT.PLP Receiving Secondary Pkg Site],
+PLP_PRJ_GROUP			as		[PJT.PLP Project Group],
+PLP_INITIATIVE			as		[PJT.PLP Initiative],
+PLP_PRIORITY			as		[PJT.PLP Priority],
+IN_LINE_PROJECT_MANAGER			as		[PJT.PLP In Line Project Manager],
+PROGRAM_MANAGER			as		[PJT.PLP Program Manager],
+PLP_RA_SUBMISSION			as		[PJT.PLP RA Submission],
+PLP_PDT_SHELF_LIFE			as		[PJT.PLP Product Shelf-Life (Months)],
+date((BRIDGE_SCK_COVERS)	)	as		[PJT.PLP Bridge Stock Coverage],
+OOS_RISK			as		[PJT.PLP Out Of Stock Risk],
+PLP_OOS_DETAIL			as		[PJT.Details about Out Of Stk],
+PLP_SKU_CHANGE_REQ			as		[PJT.PLP SKU Change Required],
+PLP_CURR_API_SOURCE			as		[PJT.PLP Current API Source],
+PLP_FUT_API_SOURCE			as		[PJT.PLP Future API Source],
+PLP_CURR_API_PRICE			as		[PJT.PLP Current API price ($/kg)],
+PLP_FUT_API_PRICE			as		[PJT.PLP Future API price ($/kg)],
+PLP_ANN_API_QTY			as		[PJT.PLP Annual API Quantity(kg)],
+PLP_EST_API_SAV			as		[PJT.PLP Estimated API Savings ($)],
+PLP_AOP_CAT			as		[PJT.PLP AOP Category / Project Rationale],
+GILP_ID			as		[PJT.PLP GILP ID],
+PLP_PSNEXT_REF			as		[PJT.PLP PS Next Reference],
+PLP_SKUS			as		[PJT.PLP SKU],
+PLP_SEND_TEST_SITE			as		[PJT.PLP Sending testing sites],
+PLP_FUT_SEND_RELEASE_SITE			as		[PJT.PLP Sending Release sites],
+PLP_SEND_STAB_TEST_SITE			as		[PJT.PLP Sending Stability Testing sites],
+PLP_REC_TEST_SITE			as		[PJT.PLP Receiving testing sites],
+PLP_REV_RELEASE_SITE			as		[PJT.PLP Receiving Release sites],
+PLP_REC_STAB_TEST_SITE			as		[PJT.PLP Receiving Stability Testing sites],
+PLP_PERCENT_COMPLETE			as		[PJT.PLP % Completion],
+PLP_DOSSIER			as		[PJT.PLP Dossier #],
+PLP_AMSO_PRJ			as		[PJT.PLP AMSO Project ID],
+date(PLP_ASOFDATE)			as		[PJT.PLP As of Date],
+REGION_MARKET_SKU			as		[PJT.PLP SKU Related Regions/Markets (SKU Market per Region)],
+//removed as for the PLP we use the same strenght as for pipline projects
+//PRJ_STRENGTHS			as		[PJT.PLP Strength],
+NITRO_AFFECTED_PRJ			as		[PJT.PLP Nitrosamine Affected Project],
+//remove -for PLP applies the same dosage form as for pipline projects from product
+//DOSAGE_FORM			as		[PJT.PLP Dosage Form],
+PLP_PRJ_TYPE			as		[PJT.PLP Project type],
+PRJ_RND_PROGRESS			as		[PJT.PLP R&D Project Progress],
+PLP_API_STOCK_COVER			as		[PJT.PLP API Bridge Stock Coverage],
+PLP_API_STOCK_QTY			as		[PJT.PLP API Bridge Stock Quantity (kg)],
+RECEIV_BULK_MFG_ALLOC_REASON			as		[PJT.PLP Receiving Bulk Mfg. Allocation Reason],
+RECEIV_BULK_MFG_ALLOC_COMMENTS			as		[PJT.PLP Receiving Bulk Mfg. Allocation Comments],
+// field is indicating if the project is PLP or not (yes-no)
+PLP_PROJECT as  [PJT.PLP Project Y/N],
+
+
+//added PLP fields by Olga Voloshchuk 01-12-2022
+//new plp fields 16/03/2023
+PLP_FUT_STAB_TEST_SITE		as	[PJT.PLP Future Stability Testing Site],
+PLP_FUT_REL_TEST_SITE		as	[PJT.PLP Future Release Testing site],
+PLP_PRJ_COUNTRIES		as	[PJT.PLP PLP Project Countries],
+date(MAJOR_COMM_SUPPLY)		as	[PJT.PLP WP Commitment date - Commercial Supply],
+date(MAJOR_REGULATORY_SUBMISSION)		as	[PJT.PLP WP Commitment date - Regulatory Submission],
+date(MAJOR_SUB_BATCH_MFG)		as	[PJT.PLP WP Commitment date - Sub Batch Mfg],
+date(MAJOR_TTD)		as	[PJT.PLP WP Commitment date - TTD],
+date(PLP_COMM_SUPPLY_FOR_MAJOR)		as	[PJT.PLP 1st Commercial Supply for Major],
+date(PLP_REG_SUB_FOR_MAJOR)		as	[PJT.PLP 1st Regulatory Submission for Major],
+date(PLP_SUB_BATCH_MFG_FOR_MAJOR)		as	[PJT.PLP 1st Submission Batch Mfg for Major],
+PLP_TTD_FOR_MAJOR		as	[PJT.PLP 1st TTD for Major],
+COMM_SUPPLY_FOR_MAJOR_A_P		as	[PJT.PLP 1st Commercial Supply for Major A/P],
+PLP_REG_SUB_FOR_MAJOR_A_P		as	[PJT.PLP 1st Regulatory Submission for Major A/P],
+SUB_BATCH_MFG_FOR_MAJOR_A_P		as	[PJT.PLP 1st Submission Batch Mfg for Major A/P],
+PLP_TTD_FOR_MAJOR_A_P		as	[PJT.PLP 1st TTD for Major A/P],
+if(WildMatch(SP_PROJECT_ATTRIBUTES,'*Biosimilar product*')>0,'Y','N') as [PJT.Biosimilar Y/N],
+PRJ_TOP_PROJECT as [PJT.Top Project],
+date(SMALL_SCALE_BATCH_MNF_R_D_DATE) as [PRJ.Small scale batch manufacturing R&D],
+CPD_DEVICE_SITE as [PRJ.CPD Device Site],
+MAIN_MARKET as [PRJ.Main market],
+date(SUPPLY_NEXT_YEAR) as 	[PJT.PLP WP Commitment date Next Year - Commercial Supply],	
+SUB_NEXT_YEAR		as [PJT.PLP WP Commitment date Next Year - Regulatory Submission],
+MFG_NEXT_YEAR	as [PJT.PLP WP Commitment date Next Year - Sub Batch Mfg],	
+TTD_NEXT_YEAR	as [PJT.PLP WP Commitment date Next Year - TTD]	,
+SIGNATURE_LA    as [PJT.Signature date (LSA)],
+CROWN_JEWELS    as [PJT.Medis Crown jewels],
+date(DOCUMENT_TTD_EARLIEST)   as  [PJT.Current Start Date Technology Transfer Document (TTD)],
+DOCUMENT_TTD_EARLIEST_AP      as  [PJT.Current Dates Technology Transfer Document (TTD)],
+date(MFG_INITIATION_EARLIEST) as  [PJT.Current Start Date Submission Batches Manufacturing Initiation],
+MFG_INITIATION_EARLIEST_AP    as  [PJT.Current Dates Submission Batches Manufacturing Initiation],
+date(REG_SUBMISSION_EARLIEST) as  [PJT.Current Start Date Regulatory Submission],
+REG_SUBMISSION_EARLIEST_AP    as  [PJT.Current Dates Regulatory Submission],
+date(COMM_SUP_1ST_DELIVERY_EARLIEST)  as  [PJT.Current Start Date Commercial Supply - 1st Delivery],
+date(COMM_SUP_1ST_DELIVERY_LATEST)    as  [PJT.Commercial supply to last market – planned start],
+COMM_SUPPLY_1ST_DELIVERY_AP           as  [PJT.Current Dates Commercial Supply - 1st Delivery]
+,TOP_PROJECT		                  as  [PJT.Top project]   
+,MOA                                  as  [PJT.MoA]	
+,LOE		                          as  [PJT.LoE]
+,HIGH_LEVEL_STATUS                    as  [PJT.high level status/ risk summary]		
+,COMPETITOR_LANDSCAPE                 as  [PJT.Competitor Landscape]		
+
+
+
+
+
+
+//new PLP fields 16/03/2023
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT.QVD](qvd)
+;
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+PROJECT_HIST: //2018-11-05, RSYSIUK	added //2019-01-02	RSYSIUK	changed
+NoConcatenate 
+LOAD 
+	[PROJECT_CODE]			AS [PJT.Project Code]
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where [ACT_IND] <> 1
+and [VERSION] = 1
+and [TO_DATE] >= YearStart(Today())
+and [STATUS] = 'Active' and Year([FIRST_SUBMISSION_DATE]) = Year(Today())
+;
+
+Concatenate(PROJECT_HIST)
+LOAD 
+	[PROJECT_CODE]			AS [PJT.Project Code]
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where [ACT_IND] <> 1
+and [VERSION] <> 1
+and [FROM_DATE] < YearStart(Today())
+and [TO_DATE] >= YearStart(Today())
+and [STATUS] = 'Active' and Year([FIRST_SUBMISSION_DATE]) = Year(Today())
+;
+
+Inner Join(PROJECT_HIST)
+LOAD 
+	[PROJECT_CODE]			AS [PJT.Project Code]
+    FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where [ACT_IND] = 1
+and (WildMatch(STATUS,'Cancelled','On Hold') or Year(FIRST_SUBMISSION_DATE) > Year(Today()))
+;
+
+Left Join(PROJECT) //2018-11-05, RSYSIUK
+LOAD
+	[PJT.Project Code],
+    1						AS [_FLAG_MOVED_TO_NEXT_YEAR_OR_CANCELED_ORON_HOLD]
+Resident PROJECT_HIST
+;
+Drop Table PROJECT_HIST;
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+[PJT/Manufacturing Sites]:
+Load *,
+Pick(WildMatch([PJT.Manufacturing Site (single value)],'*Kfar-Saba*','*Salt Lake City*','*Zagreb*','*Jerusalem*','*Contract Manufacturing*','*Haarlem*','*Goa*'),'Kfar-Saba','Salt Lake City','Zagreb','Jerusalem','TPO','Haarlem','Goa') as [PJT.Manufacturing Group of Sites]
+;
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.Manufacturing Sites],',')) as [PJT.Manufacturing Site (single value)]
+Resident PROJECT;
+
+[PJT/Development Sites]:
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.Development site],',')) as [PJT.Development Site (single value)]
+Resident PROJECT;
+
+[PJT/Packaging Sites]:
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.Packaging Sites],',')) as [PJT.Packaging Site (single value)]
+Resident PROJECT;
+
+
+
+
+//Added on 18052021 for the new project permission group CMO & external sites (Non DEV/MNF)
+[PJT/Release Sites]:
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.Release Sites],',')) as [PJT.Release Sites (single value)]
+Resident PROJECT;
+[PJT/Testing Sites]:
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.Testing Sites],',')) as [PJT.Testing Sites (single value)]
+Resident PROJECT;
+
+[PJT_SITES (Non DEV/MNF)]:
+Load [_PROJECT_KEY], 
+[PJT.Release Sites (single value)] as [PJT.Site.Value (Non DEV/MNF)],
+'Release Sites' as [PJT.Site.Name (Non DEV/MNF)]
+Resident [PJT/Release Sites];
+Concatenate
+Load [_PROJECT_KEY], 
+[PJT.Testing Sites (single value)] as [PJT.Site.Value (Non DEV/MNF)],
+'Testing Sites' as [PJT.Site.Name (Non DEV/MNF)]
+Resident [PJT/Testing Sites];
+Concatenate
+Load [_PROJECT_KEY], 
+[PJT.Packaging Site (single value)] as [PJT.Site.Value (Non DEV/MNF)],
+'Packaging Site' as [PJT.Site.Name (Non DEV/MNF)]
+Resident [PJT/Packaging Sites];
+//End of Added on 18052021 for the new project permission group CMO & external sites (Non DEV/MNF)
+
+
+
+
+
+[PJT_SITES]:
+Load [_PROJECT_KEY], 
+[PJT.Manufacturing Site (single value)] as [PJT.Site.Value],
+'Manufacturing Site' as [PJT.Site.Name]
+Resident [PJT/Manufacturing Sites];
+Concatenate
+Load [_PROJECT_KEY], 
+[PJT.Development Site (single value)] as [PJT.Site.Value],
+'Development Site' as [PJT.Site.Name]
+Resident [PJT/Development Sites];
+Concatenate
+Load [_PROJECT_KEY], 
+[PJT.Packaging Site (single value)] as [PJT.Site.Value],
+'Packaging Site' as [PJT.Site.Name]
+Resident [PJT/Packaging Sites];
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+//13032023 Added for PLP single site
+NoConcatenate
+[PJT/PLP Site Temp1]:
+Load Distinct [_PJT.KEY] as [_PROJECT_KEY],
+Trim(SubField([PJT.PLP Receiving Mfg Site]
+&','&[PJT.PLP Sending Primary Pkg Site]
+&','&[PJT.PLP Sending Secondary Pkg Site]
+&','&[PJT.PLP Receiving Primary Pkg Site]
+&','&[PJT.PLP Receiving Secondary Pkg Site]
+&','&[PJT.PLP Sending Mfg Site]
+&','&[PJT.PLP Receiving Mfg Site]
+&','&[PJT.PLP Sending Primary Pkg Site]
+&','&[PJT.PLP Sending Secondary Pkg Site]
+&','&[PJT.PLP Receiving Primary Pkg Site]
+&','&[PJT.PLP Receiving Secondary Pkg Site],',') ) as [PJT.PLP Site con]
+Resident PROJECT;
+NoConcatenate
+Temp:
+Load Distinct
+ [_PROJECT_KEY]
+ ,[PJT.PLP Site con] as [PJT.PLP Site single value]
+
+ Resident [PJT/PLP Site Temp1]
+  where len(trim([PJT.PLP Site con]))>0 ;
+ Drop Table [PJT/PLP Site Temp1];
+ rename table Temp to [PJT/PLP Site];
+ 
+ //13032023 Added for PLP single site
+ip_owners_flags:
+Load Distinct [_PJT.KEY],
+left(SubField([PJT.IP Owner],'(',2),3) as flag
+Resident PROJECT;
+Concatenate
+Load Distinct [_PJT.KEY],
+lower(SubField(trim(SubField([PJT.Development site],',')),' ')) as flag
+Resident PROJECT;
+Concatenate
+Load Distinct [_PJT.KEY],
+lower(SubField(trim(SubField([PJT.Manufacturing Sites],',')),' ')) as flag
+Resident PROJECT;
+
+ip_owners:
+//PJT.IP Owner/PJT.Dev.Site/PJT.Manuf.Site - user_name
+Load * Inline [flag, _PJT.IP Owner Username
+721, Milan Brkan
+zagreb, Milan Brkan
+721, IVANA SKOKO-BONIC
+zagreb, IVANA SKOKO-BONIC
+361, Claire Kellow
+toronto, Claire Kellow
+001, Eran Hadad
+744, Eran Hadad
+kfar-saba, Eran Hadad
+jerusalem, Eran Hadad
+godollo, Eran Hadad
+debrecen, Eran Hadad
+];
+
+Inner Join
+Load Distinct flag,
+	[_PJT.KEY] as [_PROJECT_KEY]
+Resident ip_owners_flags;
+Drop Table ip_owners_flags;
+Drop Field flag;
