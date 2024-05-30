@@ -1,0 +1,63 @@
+LET vStartTime = now();
+
+bridge_table:
+
+/* - P_D_M_*_* - */  Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& [_SA_DEV_SITE] &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_D_*_C_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_MFG_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_D_*_*_R - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - P_*_M_C_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_*_M_*_R - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - P_*_*_C_R - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY';
+/* - *_D_M_C_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& [_SA_MFG_SITE] &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_D_M_*_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - *_D_*_C_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY';
+/* - *_*_M_C_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& [_Region_Country] &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY';
+
+/* - P_D_*_*_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_*_M_*_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_*_*_C_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - P_*_*_*_R - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - *_D_M_*_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_D_*_C_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_D_*_*_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - *_*_M_C_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_*_M_*_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+/* - *_*_*_C_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY';
+
+/* - P_*_*_*_* - */ Concatenate Load Distinct _AuthID, UPPER([_SA_PJT_GROUP] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_D_*_*_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& [_SA_DEV_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_*_M_*_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& [_SA_MFG_SITE] &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_*_*_C_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region_Country] &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region] <> 'ANY';
+/* - *_*_*_*_R - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>'&'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_Region] &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY';
+
+/* - *_*_*_*_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+
+/* - *_*_*_*_* - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>') as AUTHP Resident KeyTable		Where [_SA_PJT_GROUP] <> 'ANY' And [_SA_DEV_SITE] <> 'ANY' And [_SA_MFG_SITE] <> 'ANY' And [_Region_Country] <> 'ANY' And [_Region] <> 'ANY';
+//Adding PLP Site 
+
+/* - *_*_*_*_*_S - */ Concatenate Load Distinct _AuthID, UPPER('<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& '<ANY>' &'|'& [_SA_PLP_PROJECT]) as AUTHP Resident KeyTable		;
+
+
+
+_bridge: Load _AuthID, AUTHP as _AUTHP resident bridge_table;
+
+
+USER:
+LOAD UPPER([SA.PJT_GROUP] &'|'& [SA.DEV_SITE] &'|'& [SA.MFG_SITE] &'|'& [SA.CNTRY] &'|'& [SA.REGION]&'|'&[SA.PLP_PROJECT]) as _AUTHP
+	,SubField([User.Name],' ',1) as [SA.UserFirstName]
+    ,[User.Name] as [SA.UserName]
+    ,[User.Login] as [SA.Login]
+    ,[USERID] as [SA.USERID]
+	,[SA.PJT_GROUP]
+	,[SA.DEV_SITE]
+	,[SA.MFG_SITE]
+	,[SA.CNTRY]
+	,[SA.REGION]
+	,[SA.PLP_PROJECT]
+    //,[SA.PLP_SITE]
+FROM [lib://PLM (tevacorp_admqlik)\Extract\QVD\GLB_PLM_USERS.QVD](qvd);
+
+Drop Fields [_SA_PJT_GROUP],[_SA_DEV_SITE],[_SA_MFG_SITE],[_Region_Country],[_Region];
+
+LET vLoadTime = floor((now()-vStartTime)*24*60*60);
+trace loading time: $(vLoadTime);
