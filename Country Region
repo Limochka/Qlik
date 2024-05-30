@@ -1,0 +1,59 @@
+[COUNTRY_REGION]:
+LOAD 
+    [COUNTRY_KEY]	        as [_CNTRY.REGION_COUNTRY_KEY],
+	[ORGANIZATION_KEY]      as [_CNTRY.ORGANIZATION_KEY],
+    [COUNTRY_LEVEL] 		as [CNTRY.Country Level],
+	[COUNTRY_CODE]  		as [CNTRY.Country Code] ,
+	[MBI_COUNTRY_CODE] 		as [CNTRY.MBI Country Code],
+	[COUNTRY_NAME] 			as [CNTRY.Country Name],
+	[REGION_NAME] 			as [CNTRY.Region Name],
+    NPV_COUNTRY_CODE		as [CNTRY.NPV Country Code], 
+    REGION_NAME_OLD			AS [CNTRY.Region Old], //V1, 07/06/2018, LMIZRAHITO
+    NPV_FRC_LEVEL			as [CNTRY.NPV FRC Level],
+    [L1_CODE]               as [CNTRY.L1 Code],
+	[L1_NAME]				as [CNTRY.L1 Name],
+	[L2_CODE] 			    as [CNTRY.L2 Code],
+	//[L2_NAME],
+	[L3_CODE]			    as [CNTRY.L3_CODE],
+        If([L3_CODE] = 'Europe', [L3_CODE], 
+            If(match([REGION_NAME], 'CA', 'US'), [REGION_NAME],
+            If(match([L2_CODE], 'Asia', 'EMIA', 'LATAM'), [L2_CODE]))) as [CNTRY.Market], 
+	//[L3_NAME],
+	//[L4_CODE],
+	//[L4_NAME],
+    [REGION_FOR_BI]         as [CNTRY.Region Name BI],
+    GM_COUNTRIES_FLAG       as [CNTRY.GM_countries_flag],
+    GM_VENEZUELA_FLAG       as [CNTRY.GM_Venezuela_flag],
+    RND_REGION_NAME AS [CNTRY.R&D Region Name]	//LMIZRAHITO 27/08/2018 - Fixed in favor of R&D
+
+ FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_COUNTRY_REGION.QVD](qvd);
+
+LET vLoadTime = floor((now()-vStartTime)*24*60*60);
+trace loading time: $(vLoadTime);
+///$tab DIM_ORGANIZATION
+LET vStartTime = now();
+
+[ORGANIZATION]:
+NoConcatenate
+LOAD
+    ORGANIZATION_KEY					as [_ORG.ORGANIZATION_KEY],
+    MARKET_GARP_CODE					as [Market Garp Code],
+    MARKET_GARP_DESC					as [Market Garp Desc],
+    MARKET_GARP_DESC_SHORT				as [Market Garp Desc Short],
+    MKT_LEVEL1_NAME						as [Market Level1 Name],
+    MKT_LEVEL2_NAME						as [Market Level2 Name],
+    MKT_LEVEL2_DASHBOARD 				as [Market Level2 Dashboard],
+    MKT_LEVEL3_NAME						as [Market Level3 Name],
+    MKT_SORT_ORDER						as [Market Sort Order],
+    MKT_L2_SORT_ORDER					as [Market L2 Sort Order],
+    MKT_L2_DASHBOARD_SORT				as [Market L2 Dahsboard Sort],
+    MKT_L3_SORT_ORDER					as [Market L3 Sort Order],
+    IMS_COUNTRY							as [IMS Country]
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_COUNTRY_ORGANIZATION.QVD]
+(qvd);
+
+Left Join(ORGANIZATION) // 2019-02-06 RSYSIUK not sure we need this ToDo: investigate if we can drop this calculation
+Load 
+    [_CNTRY.REGION_COUNTRY_KEY]	        as [_ORG.REGION_COUNTRY_KEY],
+	[_CNTRY.ORGANIZATION_KEY]	      	as [_ORG.ORGANIZATION_KEY]
+resident COUNTRY_REGION;
