@@ -1,0 +1,1969 @@
+///$tab Version
+/*
+1. 20201125 - QC9878 - Renamed 2 columns and applied logich for them
+
+
+
+
+2021-03-01 OVOLOSHCHUk -  Clinical activities in 6 months sheet - added a condition to the table 'Active' and 'In termination'.
+
+2021-06-14 Olga Vloshchuk - 1. The category of US/EU Submission - Change it to US/EU/Ca Submission and add to it these milestones:
+                           'Canada (NDS) Submission', 'Croatia Submission', 'Macedonia Submission', 'Montenegro Submission', 
+                           'Poland Submission', 'Romania Submission', 'Serbia Submission', 'Switzerland Submission', 'GB Submission'
+                           2. Add another category in a different color called:
+                           IM Submission, to include submission of all other countries (let me know if you need me to send the full list)"
+
+2021-07-15 Olga Voloshchuk - exclude protocols that have the word 'cancelled' in "Clinical Demand' report, 
+                             to this the variable was created -"vClinical Demand Static filter' in which all the filters for the report present
+
+
+
+
+2021-08- 17  Olga Voloshchuk - For all Specialty reports (except Custom table) there should be a rule to include only activities 
+                               that have a value in 'Specialty Activity Type' .
+                               Modifications are doen in the "Static filter" section a
+                               nd separated table of Task_WP created for Custome Table report - 'Task WP for Custom table report'
+
+
+
+
+*/
+///$tab Main
+Binary [LIB://PLM_ERD_App (tevacorp_admqlik)];
+//Binary [lib://Apps (tevacorp_admqlik)]/771ca655-0c3a-4c9f-97d0-bd03a986d7d0; 
+//Binary [lib://Apps (tevacorp_admqlik)]/68d80788-0974-4dbe-a0ad-722869b9e6ac; //PLM_ERD - QC9879
+
+//Binary [lib://Apps (tevacorp_admqlik)]/b648d6be-01cb-4200-8a90-ab848c325e65; //PLM_ERD -Test
+
+// 2018-10-31	RSYSIUK	
+NullAsValue [t.Specialty Project Name];
+SET NullValue='';
+
+SET ThousandSep=',';
+SET DecimalSep='.';
+SET MoneyThousandSep=',';
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#,##0.00;($#,##0.00)';
+SET TimeFormat='h:mm:ss TT';
+SET DateFormat='DD-MMM-YYYY';
+SET TimestampFormat='DD-MMM-YYYY';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-US';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+
+SET HidePrefix = '_';
+
+
+//removing PLP data
+
+
+Inner Join ([KeyTable])
+Load Distinct
+[_SA_PLP_PROJECT]
+Resident KeyTable
+where 
+[_SA_PLP_PROJECT]='N';
+///$tab Medical Melistone
+// 27-10-2020 - Dmytro Isaiev - Medical Writing Monthly Milestone
+Set vCurrentDate = MonthEnd(Today());
+LET vFieldWidthMedical = 85;
+LET vAdditionalParamMedical = 5;
+SET vRowHeightMedical = floor(floor(60*(50/$(vFieldWidthMedical)*3)+$(vAdditionalParamMedical)*2));
+
+LET vFieldWidthMedicalLegend = 150;
+
+dev_legend_category2:
+Load * Inline [d_l_c2.row_n, d_l_c2.elem1, d_l_c2.elem2, d_l_c2.elem3, d_l_c2.elem4, d_l_c2.elem5, d_l_c2.elem6, d_l_c2.elem7
+1, <font color="green">◆</font>, <font color="blue">◆</font>, <font color="red">◆</font>, <font color="#efe04c">◆</font>, <font color="green">▲</font>, <font color="#efe04c">▲</font>, <font color="green">✓</font> 
+2, Clinical Phase 1, Clinical Phase 2, Clinical Phase 3, Clinical Phase 4, Submission, Meeting, Approval
+];
+///$tab QPB  Milestones Inn Medicine
+LET vStartTime = now();
+
+    DIM_QPB_INNM_MILESTONE:
+    Load 
+    R_NUM					AS R_NUM_76
+    , R_NUM_M              AS R_NUM_M_76
+    , PROJECT_KEY 			AS PROJECT_KEY_76
+    , WP_KEY				AS WP_KEY_76
+    , PROJECT				AS PROJECT_76
+    , MILESTONE_CATEGORY	AS MILESTONE_CATEGORY_76
+    , CLINICAL_STUDY_PHASE	AS CLINICAL_STUDY_PHASE_76
+    , LEGEND_CATEGORY		AS LEGEND_CATEGORY_76
+    , if(isnull(PROTOCOL_NUMBER) or len (PROTOCOL_NUMBER)<1,777, PROTOCOL_NUMBER)		AS PROTOCOL_NUMBER_76
+    , PROTOCOL_NUMBER        As PROTOCOL_NUMBER_QPB_INNM
+    , ACTIVITY_NAME			AS ACTIVITY_NAME_76
+    , MILESTONE_DATE 		AS MILESTONE_DATE_76
+    ,PROJECT&if(isnull(PROTOCOL_NUMBER) or len (PROTOCOL_NUMBER)<1,777, PROTOCOL_NUMBER) as key76
+    FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_QPB_MILESTONE_INN.QVD](qvd)
+
+    where INN_MED_MILESTONE='Y';
+
+
+DIM_QPB_INNM_MILESTONE_ALL:
+Load 
+  R_NUM_76 as R_NUM_76
+, PROJECT_KEY_76
+, PROJECT_76
+, PROJECT_KEY_76 as _PROJECT_KEY
+,PROTOCOL_NUMBER_76
+,ACTIVITY_NAME_76
+,MILESTONE_DATE_76
+,key76
+, if(IsNull(PROTOCOL_NUMBER_QPB_INNM) or len(PROTOCOL_NUMBER_QPB_INNM)<1, chr(160) ,PROTOCOL_NUMBER_QPB_INNM) as PROTOCOL_NUMBER_QPB_INNM 
+Resident DIM_QPB_INNM_MILESTONE;
+
+
+//M_1:
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_1
+, PROJECT_76 as PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_1
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_1
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76 as PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),0))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+
+//M_2:
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_2
+, PROJECT_76 as PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_2
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_2
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76 as  PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),1))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+
+//M_3:
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+
+Load 
+R_NUM_M_76 as R_NUM_76,
+PROJECT_76 as PROJECT_76
+//,peek(key76,-1) as key_prev
+// , Previous(key76) as key_prev
+// ,peek(R_NUM_76,-1)+1 as RNUm_prev
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_3
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_3
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76 as  PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76 as  MILESTONE_DATE_76
+
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),2))
+ORDER BY   key76 desc , MILESTONE_DATE_76 ASC;
+
+
+
+
+//M_4
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_4
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_4
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_4
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),3))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_5
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_5
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_5
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_5
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),4))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_6
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_6
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_6
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_6
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),5))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_7
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_7
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_7
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_7
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),6))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+
+//M_8
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_8
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_8
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_8
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),7))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_9
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_9
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_9
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_9
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),8))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_10
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_10
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_10
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_10
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),9))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_11
+Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+R_NUM_M_76 as R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_11
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_11
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_11
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),10))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+//M_12
+Left Join(DIM_QPB_INNM_MILESTONE_ALL) 
+Load 
+R_NUM_M_76 as R_NUM_76
+//if(PROJECT_76=peek(PROJECT_76,-1) and PROTOCOL_NUMBER_76=peek(PROTOCOL_NUMBER_76,-1),peek(R_NUM_76,-1)+1,1) as  R_NUM_76 
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_12
+, PROJECT_76
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_12
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_12
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),11))
+ORDER BY key76 desc , MILESTONE_DATE_76 ASC;
+
+/*
+M_12:
+//Left Join(DIM_QPB_INNM_MILESTONE_ALL)
+Load 
+//if(PROJECT_76=peek(PROJECT_76,-1) and PROTOCOL_NUMBER_76=peek(PROTOCOL_NUMBER_76,-1),peek(R_NUM_76,-1)+1,1) as  R_NUM_77
+//, if(PROJECT_76=peek(PROJECT_76,-1),peek(R_NUM_76,-1)+1,1) as R_NUM_12
+R_NUM_76 as  R_NUM_77,
+AutoNumber(RowNo(),PROTOCOL_NUMBER_76&PROJECT_76) as rrr,
+peek(PROJECT_76,-1,'DIM_QPB_INNM_MILESTONE') as PROJECT_78,
+peek(PROTOCOL_NUMBER_76,-1,'DIM_QPB_INNM_MILESTONE') as PROTOCOL_NUMBER_78,
+PROJECT_76 as Project_77
+//, MILESTONE_CATEGORY_76
+//, CLINICAL_STUDY_PHASE_76
+, LEGEND_CATEGORY_76 AS LEGEND_CATEGORY_12
+, ACTIVITY_NAME_76 AS MILEST_QPB_INNM_12
+//, ACTIVITY_NAME_76
+, PROTOCOL_NUMBER_76 as PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_76
+Resident DIM_QPB_INNM_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_76) = MonthEnd(addmonths(Today(),11))
+ORDER BY PROJECT_76, PROTOCOL_NUMBER_76, MILESTONE_DATE_76 ASC;
+
+
+*/
+
+
+DROP Table DIM_QPB_INNM_MILESTONE;
+
+DIM_QPB_INNM_MILESTONE_FINAL:
+Load 
+  R_NUM_76 			
+, PROJECT_KEY_76
+, PROJECT_76
+, _PROJECT_KEY
+, PROTOCOL_NUMBER_QPB_INNM
+, MILEST_QPB_INNM_1
+, LEGEND_CATEGORY_1			AS LEG_CAT_QPB_INNM_1
+, MILEST_QPB_INNM_2
+, LEGEND_CATEGORY_2			AS LEG_CAT_QPB_INNM_2
+, MILEST_QPB_INNM_3
+, LEGEND_CATEGORY_3			AS LEG_CAT_QPB_INNM_3
+, MILEST_QPB_INNM_4
+, LEGEND_CATEGORY_4			AS LEG_CAT_QPB_INNM_4
+, MILEST_QPB_INNM_5
+, LEGEND_CATEGORY_5			AS LEG_CAT_QPB_INNM_5
+, MILEST_QPB_INNM_6
+, LEGEND_CATEGORY_6			AS LEG_CAT_QPB_INNM_6
+, MILEST_QPB_INNM_7
+, LEGEND_CATEGORY_7			AS LEG_CAT_QPB_INNM_7
+, MILEST_QPB_INNM_8
+, LEGEND_CATEGORY_8			AS LEG_CAT_QPB_INNM_8
+, MILEST_QPB_INNM_9
+, LEGEND_CATEGORY_9			AS LEG_CAT_QPB_INNM_9
+, MILEST_QPB_INNM_10
+, LEGEND_CATEGORY_10		AS LEG_CAT_QPB_INNM_10
+, MILEST_QPB_INNM_11
+, LEGEND_CATEGORY_11		AS LEG_CAT_QPB_INNM_11
+, MILEST_QPB_INNM_12
+, LEGEND_CATEGORY_12		AS LEG_CAT_QPB_INNM_12
+
+Resident DIM_QPB_INNM_MILESTONE_ALL
+Where 1=1 and 
+Not (
+IsNull(MILEST_QPB_INNM_1) and
+IsNull(MILEST_QPB_INNM_2) and 
+IsNull(MILEST_QPB_INNM_3) and
+IsNull(MILEST_QPB_INNM_4) and
+IsNull(MILEST_QPB_INNM_5) and
+IsNull(MILEST_QPB_INNM_6) and
+IsNull(MILEST_QPB_INNM_7) and
+IsNull(MILEST_QPB_INNM_8) and
+IsNull(MILEST_QPB_INNM_9) and
+IsNull(MILEST_QPB_INNM_10) and
+IsNull(MILEST_QPB_INNM_11) and
+IsNull(MILEST_QPB_INNM_12) 
+);
+
+DROP Table DIM_QPB_INNM_MILESTONE_ALL;
+
+
+LET vLoadTime = floor((now()-vStartTime)*24*60*60);
+trace loading time: $(vLoadTime);
+///$tab QPB Biosimilar Milestones Biosimilar
+LET vStartTime = now();
+
+DIM_QPB_B_MILESTONE:
+Load 
+  R_NUM					AS R_NUM_77 
+, PROJECT_KEY 			AS PROJECT_KEY_77
+, WP_KEY				AS WP_KEY_77
+, PROJECT				AS PROJECT_77
+, MILESTONE_CATEGORY	AS MILESTONE_CATEGORY_77
+, CLINICAL_STUDY_PHASE	AS CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY		AS LEGEND_CATEGORY_77
+, if(isnull(PROTOCOL_NUMBER) or len (PROTOCOL_NUMBER)<1,777, PROTOCOL_NUMBER)		AS PROTOCOL_NUMBER_77
+,PROTOCOL_NUMBER        As PROTOCOL_NUMBER_QPB_B
+, ACTIVITY_NAME			AS ACTIVITY_NAME_77
+, MILESTONE_DATE 		AS MILESTONE_DATE_77
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_QPB_MILESTONE_BIOSIMILAR.QVD](qvd)
+
+where BIOSIMILAR_MILESTONE='Y';
+
+
+DIM_QPB_B_MILESTONE_ALL:
+Load 
+  R_NUM_77 
+, PROJECT_KEY_77
+, PROJECT_77
+, PROJECT_KEY_77 as _PROJECT_KEY
+,PROTOCOL_NUMBER_77
+, if(IsNull(PROTOCOL_NUMBER_QPB_B) or len(PROTOCOL_NUMBER_QPB_B)<1, chr(160) ,PROTOCOL_NUMBER_QPB_B) as PROTOCOL_NUMBER_QPB_B 
+Resident DIM_QPB_B_MILESTONE;
+
+//M_1
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_1
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_1
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_1
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),0))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_2
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_2
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_2
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_2
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),1))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_3
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_3
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_3
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_3
+//, w.ACTIVITY_NAME
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),2))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_4
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_4
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_4
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_4
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),3))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_5
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_5
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_5
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_5
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),4))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_6
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_6
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_6
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_6
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),5))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_7
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_7
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_7
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_7
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),6))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_8
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_8
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_8
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_8
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),7))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_9
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_9
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_9
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_9
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),8))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_10
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_10
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_10
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_10
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),9))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_11
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_11
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_11
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_11
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),10))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+//M_12
+Left Join(DIM_QPB_B_MILESTONE_ALL)
+Load 
+if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_77
+//, if(PROJECT_77=peek(PROJECT_77,-1),peek(R_NUM_77,-1)+1,1) as R_NUM_12
+, PROJECT_77
+//, MILESTONE_CATEGORY_77
+//, CLINICAL_STUDY_PHASE_77
+, LEGEND_CATEGORY_77 AS LEGEND_CATEGORY_12
+, ACTIVITY_NAME_77 AS MILEST_QPB_B_12
+//, ACTIVITY_NAME_77
+, PROTOCOL_NUMBER_77
+//, MILESTONE_DATE_77
+Resident DIM_QPB_B_MILESTONE
+where 1=1 and MonthEnd(MILESTONE_DATE_77) = MonthEnd(addmonths(Today(),11))
+ORDER BY PROJECT_77, MILESTONE_DATE_77 ASC;
+
+
+DROP Table DIM_QPB_B_MILESTONE;
+
+DIM_QPB_B_MILESTONE_FINAL:
+Load 
+  R_NUM_77 			
+, PROJECT_KEY_77
+, PROJECT_77
+, _PROJECT_KEY
+, PROTOCOL_NUMBER_QPB_B
+, MILEST_QPB_B_1
+, LEGEND_CATEGORY_1			AS LEG_CAT_QPB_B_1
+, MILEST_QPB_B_2
+, LEGEND_CATEGORY_2			AS LEG_CAT_QPB_B_2
+, MILEST_QPB_B_3
+, LEGEND_CATEGORY_3			AS LEG_CAT_QPB_B_3
+, MILEST_QPB_B_4
+, LEGEND_CATEGORY_4			AS LEG_CAT_QPB_B_4
+, MILEST_QPB_B_5
+, LEGEND_CATEGORY_5			AS LEG_CAT_QPB_B_5
+, MILEST_QPB_B_6
+, LEGEND_CATEGORY_6			AS LEG_CAT_QPB_B_6
+, MILEST_QPB_B_7
+, LEGEND_CATEGORY_7			AS LEG_CAT_QPB_B_7
+, MILEST_QPB_B_8
+, LEGEND_CATEGORY_8			AS LEG_CAT_QPB_B_8
+, MILEST_QPB_B_9
+, LEGEND_CATEGORY_9			AS LEG_CAT_QPB_B_9
+, MILEST_QPB_B_10
+, LEGEND_CATEGORY_10		AS LEG_CAT_QPB_B_10
+, MILEST_QPB_B_11
+, LEGEND_CATEGORY_11		AS LEG_CAT_QPB_B_11
+, MILEST_QPB_B_12
+, LEGEND_CATEGORY_12		AS LEG_CAT_QPB_B_12
+
+Resident DIM_QPB_B_MILESTONE_ALL
+Where 1=1 and 
+Not (
+IsNull(MILEST_QPB_B_1) and
+IsNull(MILEST_QPB_B_2) and 
+IsNull(MILEST_QPB_B_3) and
+IsNull(MILEST_QPB_B_4) and
+IsNull(MILEST_QPB_B_5) and
+IsNull(MILEST_QPB_B_6) and
+IsNull(MILEST_QPB_B_7) and
+IsNull(MILEST_QPB_B_8) and
+IsNull(MILEST_QPB_B_9) and
+IsNull(MILEST_QPB_B_10) and
+IsNull(MILEST_QPB_B_11) and
+IsNull(MILEST_QPB_B_12) 
+);
+
+DROP Table DIM_QPB_B_MILESTONE_ALL;
+
+
+
+LET vLoadTime = floor((now()-vStartTime)*24*60*60);
+trace loading time: $(vLoadTime);
+
+///$tab Data Accuracy
+DATA_ACCURACY:
+Load 
+*,
+ERROR_CATEGORY AS [Error Category],
+ERROR_NAME AS [Error Name],
+1 as error_cnt,
+PROJECT_KEY AS _PROJECT_KEY,
+//Added on 15072021 Line identifier
+LINE_IDENTIFIER as [Error Line ID]
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_RND_DATA_ACC.QVD](qvd);
+
+Drop Fields ERROR_CATEGORY, ERROR_NAME;
+
+
+LET vScreenWidth = 1700; //Sheet Size -> Custom -> Width (px)
+LET vScreenHeight= 1300; //Sheet Size -> Custom -> Height (px)
+LET vNumOfMonths = 12;
+LET vNumOfQuarters = 4;
+LET vAdditionalParam = 5;
+
+SET vCellWidthMonth = if (floor($(vScreenWidth)/$(vNumOfMonths))>$(vAdditionalParam)*2, floor($(vScreenWidth)/$(vNumOfMonths))-$(vAdditionalParam)*2, floor($(vScreenWidth)/$(vNumOfMonths)));
+SET vCellHeightMonth =  floor(65*(65/$(vCellWidthMonth)*2.5)+$(vAdditionalParam)*2);
+SET vFontSizeMonth = 11;
+
+SET vCellWidthQuarter = if (floor($(vScreenWidth)/$(vNumOfQuarters))>$(vAdditionalParam)*3, floor($(vScreenWidth)/$(vNumOfQuarters))-$(vAdditionalParam)*3, floor($(vScreenWidth)/$(vNumOfQuarters)));
+SET vCellHeightQuarter =  floor(40*(40/$(vCellWidthQuarter)*8.5)+$(vAdditionalParam)*2);
+SET vFontSizeQuarter = 12;
+
+/*
+LET vCellWidthMonth = 155;
+LET vCellHeightMonth = 60;
+LET vFontSizeMonth = 11;
+*/
+
+///$tab Clinical Data Accuracy
+[Clinical Data Accuracy]:
+Load 
+
+ERROR_CATEGORY AS [Clinical Error Category],
+
+if(ERROR_NAME='Late Finish',ERROR_NAME,'Missing Major Milestone') AS [Clinical Error Name],
+1 as Clinical_error_cnt,
+PROJECT_KEY AS _PROJECT_KEY,
+//Added on 15072021 Line identifier
+LINE_IDENTIFIER as [Clinical Error Line ID],
+PROTOCOL_NUMBER as [Clinical Error Protocol Number],
+RND_PROJECT_MANAGER as [Clinical Error RND_PROJECT_MANAGER],
+
+ERROR_DESC as [Clinical Error Description],
+REFERENCE_FIELD as [Clinical Error Milestone],
+ACTION_REQUIRED as [Clinical Error Action Required],
+date(PLANNED_START) as [Clinical Error Planned Start]
+
+
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_Clinical_Data_Accuracy.QVD](qvd)
+
+where 
+WildMatch(upper(PROTOCOL_NUMBER),'*PHASE*')<1 and len(trim(PROTOCOL_NUMBER))>0
+;
+///$tab Task_WP Transformations
+// add some wp attributes
+Left Join(TASK_WP)
+Load Distinct
+	[_WP.KEY],
+	[_WP.PROJECT_KEY]		as [_TASK_WP.PROJECT_KEY],
+	[_WP.REGION_COUNTRY_KEY]as [_TASK_WP.REGION_COUNTRY_KEY],
+    [WP.Protocol Number]	as [_TASK_WP.Protocol Number],
+    [WP.Activity Name]		as [_TASK_WP.WP Activity Name]
+Resident WORKPACKAGE;
+
+//added 2020-06-23 N Berman - filter only tasks where non-consolidate = 1
+Inner Join(TASK_WP)
+LOAD [_TASK_WP.KEY]
+Resident TASK_WP
+Where [TASK_WP.Not Consolidate] = 1;
+
+Left Join(TASK_WP)
+LOAD [_TASK_WP.KEY],
+if([TASK_WP.Planned Start] > Now(),'Yes','No') as [Future Date]
+Resident TASK_WP;
+
+Left Join(TASK_WP)
+LOAD [_TASK_WP.PROJECT_KEY], [_TASK_WP.REGION_COUNTRY_KEY],
+min([TASK_WP.Planned Start]) as [_TASK_WP.Next Critical Milestone Date]
+Resident TASK_WP
+Where [_Task_WP.flag.Critical Milestone] = 1
+Group By [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY];
+
+Left Join(TASK_WP)
+LOAD [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+min([TASK_WP.Planned Start]) as [_TASK_WP.Next GNG Date]
+Resident TASK_WP
+Where [_Task_WP.flag.GNG] = 1
+Group By [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY];
+
+Left Join(PROJECT)
+Load [_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+[_TASK_WP.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+Date(min([_Task_WP.flag.US Submissions])) as [PJT.First US Submissions],
+Date(min([_Task_WP.flag.US Target Approval])) as [PJT.First US Target Approval],
+Date(min([_Task_WP.flag.EU Submissions])) as [PJT.First EU Submissions],
+Date(min([_Task_WP.flag.EU Target Approval])) as [PJT.First EU Target Approval],
+Date(min([_Task_WP.flag.China Submissions])) as [PJT.First China Submissions],
+Date(min([_Task_WP.flag.China Target Approval])) as [PJT.First China Target Approval]
+Resident TASK_WP
+Where [_Task_WP.flag.US Submissions]>0 Or [_Task_WP.flag.US Target Approval]>0 
+Or [_Task_WP.flag.EU Submissions]>0 Or [_Task_WP.flag.EU Target Approval]>0
+Or [_Task_WP.flag.China Submissions]>0 Or [_Task_WP.flag.China Target Approval]>0
+Group By [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+
+Left Join(PROJECT)
+Load [_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+[_TASK_WP.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+[TASK_WP.Planned Start] as [PJT.Next Critical Milestone Date],
+Concat( if(WildMatch([TASK_WP.Activity Name],'Screening Initiated (FPS)','Database Lock (DBLock)','First Patient Screened (FPS)*') and len([_TASK_WP.Protocol Number])>0,
+	[TASK_WP.Activity Name]&' - '&[_TASK_WP.Protocol Number],
+    [TASK_WP.Activity Name]), ', ') as [PJT.Next Critical Milestone Name]
+Resident TASK_WP
+Where [TASK_WP.Planned Start] = [_TASK_WP.Next Critical Milestone Date]
+And [_Task_WP.flag.Critical Milestone] = 1
+Group By [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],[TASK_WP.Planned Start]
+;
+//Drop Fields [_Task_WP.flag.Critical Milestone],[_TASK_WP.Next Critical Milestone Date];
+
+Left Join(PROJECT)
+Load [_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+[_TASK_WP.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+[TASK_WP.Planned Start] as [PJT.Next GNG Date],
+Concat([TASK_WP.Activity Name], ', ') as [PJT.Next GNG Name]
+Resident TASK_WP
+Where [TASK_WP.Planned Start] = [_TASK_WP.Next GNG Date]
+And [_Task_WP.flag.GNG] = 1
+Group By [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],[TASK_WP.Planned Start]
+;
+Drop Fields [_Task_WP.flag.GNG],[_TASK_WP.Next GNG Date];
+
+
+
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+min([_Task_WP.flag.IND/CTA Submission])								as [_Task_WP.IND/CTA Submission]
+Resident TASK_WP
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+min([_Task_WP.flag.First Patient Screened (FPS)])					as [_Task_WP.Ph2 First Patient Screened (FPS)]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 2*'
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.First Patient Screened (FPS)])					as [_Task_WP.Ph2 First Patient Screened (FPS)_max]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 2*'
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+min([_Task_WP.flag.First Patient Screened (FPS)])					as [_Task_WP.Ph3 First Patient Screened (FPS)]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 3*'
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+min([_Task_WP.flag.Submissions])									as [_Task_WP.Submissions]
+Resident TASK_WP
+Where Match([_TASK_WP.WP Activity Name],'Submissions','Europe (MAA) Submission','Regulatory Activities - Regulatory Activities','Regulatory Activities')
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+
+
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Non audited draft report])						as [_Task_WP.Non audited draft report]
+Resident TASK_WP
+Where [_Task_WP.flag.Non audited draft report] < [_Task_WP.IND/CTA Submission]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Audited draft report])							as [_Task_WP.Audited draft report]
+Resident TASK_WP
+Where [_Task_WP.flag.Audited draft report] < [_Task_WP.IND/CTA Submission]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Top Line Results Available])						as [_Task_WP.Ph1 Top Line Results Available]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 1*'
+And [_Task_WP.flag.Top Line Results Available] < [_Task_WP.Ph2 First Patient Screened (FPS)]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Database Lock (DBLock)])						as [_Task_WP.flag.Database Lock (DBLock_3column)]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 2*'
+And [_Task_WP.flag.Database Lock (DBLock)] < [_Task_WP.Ph2 First Patient Screened (FPS)_max]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Database Lock (DBLock)])							as [_Task_WP.Ph2 Database Lock (DBLock)_max]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 2*'
+And [_Task_WP.flag.Database Lock (DBLock)] < [_Task_WP.Ph3 First Patient Screened (FPS)]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+Left Join(TASK_WP)
+Load [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],
+max([_Task_WP.flag.Database Lock (DBLock)])							as [_Task_WP.Ph3 Database Lock (DBLock)]
+Resident TASK_WP
+Where [_TASK_WP.WP Activity Name] like 'Phase 3*'
+And [_Task_WP.flag.Database Lock (DBLock)] < [_Task_WP.Submissions]
+Group by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY]
+;
+
+Left Join(PROJECT)
+Load Distinct
+[_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+//[_TASK_WP.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+/*1 column*/ (Interval([_Task_WP.IND/CTA Submission]-
+
+	if( [TASK_WP.Actual Start] < MakeDate(2018,06,01)
+    	,[_Task_WP.Audited draft report]
+    	,[_Task_WP.Non audited draft report]
+    )
+    )/30)						as 'PJT.Non audited draft report -> IND Submission',
+/*2 column*/ (Interval([_Task_WP.Ph2 First Patient Screened (FPS)]-[_Task_WP.Ph1 Top Line Results Available])/30)	as 'PJT.Ph1 Top Line Results Available -> Ph2 First Patient Screened (FPS)',
+/*3 column*/ (Interval([_Task_WP.Ph2 First Patient Screened (FPS)_max]-[_Task_WP.flag.Database Lock (DBLock_3column)])/30)		as 'PJT.Ph2 Database Lock (DBLock) -> Ph2 First Patient Screened (FPS)',
+/*4 column*/ (Interval([_Task_WP.Ph3 First Patient Screened (FPS)]-[_Task_WP.Ph2 Database Lock (DBLock)_max])/30)		as 'PJT.Ph2 Database Lock (DBLock) -> Ph3 First Patient Screened (FPS)',
+/*5 column*/ (Interval([_Task_WP.Submissions]-[_Task_WP.Ph3 Database Lock (DBLock)])/30)							as 'PJT.Ph3 Database Lock (DBLock) -> USA (BLA) Submission'
+Resident TASK_WP
+;
+
+Drop Fields 
+	[_Task_WP.Non audited draft report],
+	[_Task_WP.Audited draft report],
+    [_Task_WP.IND/CTA Submission],
+	[_Task_WP.Ph2 First Patient Screened (FPS)],
+    [_Task_WP.Ph2 First Patient Screened (FPS)_max],
+	[_Task_WP.Ph1 Top Line Results Available],
+	[_Task_WP.flag.Database Lock (DBLock_3column)],
+	[_Task_WP.Ph3 First Patient Screened (FPS)],
+	[_Task_WP.Ph2 Database Lock (DBLock)_max],
+	[_Task_WP.Ph3 Database Lock (DBLock)],
+	[_Task_WP.Submissions]
+;
+
+
+Left Join(WORKPACKAGE)
+Load [_TASK_WP.PROJECT_KEY] as [_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY] as [_WP.REGION_COUNTRY_KEY],
+Max([_Task_WP.flag.Phase 1 Date]) as [_WP.G/NG Decision.Phase 1],
+Max([_Task_WP.flag.Phase 2 Date]) as [_WP.G/NG Decision.Phase 2],
+Max([_Task_WP.flag.Phase 3 Date]) as [_WP.G/NG Decision.Phase 3]
+Resident TASK_WP
+Group By [_TASK_WP.PROJECT_KEY], [_TASK_WP.REGION_COUNTRY_KEY];
+Drop Fields [_Task_WP.flag.Phase 1 Date],[_Task_WP.flag.Phase 2 Date],[_Task_WP.flag.Phase 3 Date];
+
+
+
+Left Join(WORKPACKAGE)
+Load 
+[WP.Protocol Number], [_WP.PROJECT_KEY], [_WP.REGION_COUNTRY_KEY] 
+//2020-09-25 - Dmytro Isaiev - commented the next line
+//, [_TASK_WP.Clinical_Separator]
+, Date(if([_WP.Protocol Approval (PSO)_1]=0, null(), [_WP.Protocol Approval (PSO)_1])) as [_WP.Protocol Approval (PSO)]
+, Date(if([_WP.First Patient Screened (FPS)_1]=0, null(), [_WP.First Patient Screened (FPS)_1])) as [_WP.First Patient Screened (FPS)]
+, Date(if([_WP.First Patient In (Enrolled - FPI)_1]=0, null(), [_WP.First Patient In (Enrolled - FPI)_1])) as [_WP.First Patient In (Enrolled - FPI)]
+, Date(if([_WP.Last Patient In (Enrolled - LPI)_1]=0, null(), [_WP.Last Patient In (Enrolled - LPI)_1])) as [_WP.Last Patient In (Enrolled - LPI)]
+, Date(if([_WP.Last Patient Last Visit (LPLV)_1]=0, null(), [_WP.Last Patient Last Visit (LPLV)_1])) as [_WP.Last Patient Last Visit (LPLV)]
+, Date(if([_WP.Database Lock (DBLock)_1]=0, null(), [_WP.Database Lock (DBLock)_1])) as [_WP.Database Lock (DBLock)]
+, Date(if([_WP.CSR Approval & Delivered (CSR)_1]=0, null(), [_WP.CSR Approval & Delivered (CSR)_1])) as [_WP.CSR Approval & Delivered (CSR)]
+, if([_WP.Dosing Duration_1]=0, null(), [_WP.Dosing Duration_1]) as [_WP.Dosing Duration]
+, if([_WP.Estimated Recruitment Duration_1]=0, null(), [_WP.Estimated Recruitment Duration_1]) as [_WP.Estimated Recruitment Duration]
+, if([_WP.Study Status.null_1]=0, null(), [_WP.Study Status.null_1]) as [_WP.Study Status.null]
+
+
+, Date(if([_WP.Date Range_1]=0, null(), [_WP.Date Range_1])) as [_WP.Date Range]
+;
+Load 
+[_TASK_WP.Protocol Number] as [WP.Protocol Number], 
+[_TASK_WP.PROJECT_KEY] as [_WP.PROJECT_KEY], 
+[_TASK_WP.REGION_COUNTRY_KEY] as [_WP.REGION_COUNTRY_KEY],
+//2020-09-25 - Dmytro Isaiev - commented the next line
+//if([TASK_WP.Clinical PLM_ONB] > 0, [TASK_WP.Clinical PLM_ONB], [_TASK_WP.Protocol Number]) as [_TASK_WP.Clinical_Separator],
+Min([_Task_WP.flag.Protocol Approval (PSO)]) as [_WP.Protocol Approval (PSO)_1],
+Min([_Task_WP.flag.First Patient Screened (FPS)]) as [_WP.First Patient Screened (FPS)_1],
+Min([_Task_WP.flag.First Patient In (Enrolled - FPI)]) as [_WP.First Patient In (Enrolled - FPI)_1],
+Min([_Task_WP.flag.Last Patient In (Enrolled - LPI)]) as [_WP.Last Patient In (Enrolled - LPI)_1],
+Min([_Task_WP.flag.Last Patient Last Visit (LPLV)]) as [_WP.Last Patient Last Visit (LPLV)_1],
+Min([_Task_WP.flag.Database Lock (DBLock)]) as [_WP.Database Lock (DBLock)_1],
+Min([_Task_WP.flag.CSR Approval & Delivered (CSR)]) as [_WP.CSR Approval & Delivered (CSR)_1],
+Min([_Task_WP.flag.Last Patient Last Visit (LPLV)])-max([_Task_WP.flag.Last Patient In (Enrolled - LPI)]) as [_WP.Dosing Duration_1],
+Min([_Task_WP.flag.Last Patient In (Enrolled - LPI)])-max([_Task_WP.flag.First Patient In (Enrolled - FPI)]) as [_WP.Estimated Recruitment Duration_1],
+Min([_Task_WP.Study Status.null]) as [_WP.Study Status.null_1],
+Min([_Task_WP.Date Range]) as [_WP.Date Range_1]
+Resident TASK_WP
+Group By [_TASK_WP.Protocol Number], [_TASK_WP.PROJECT_KEY], [_TASK_WP.REGION_COUNTRY_KEY]
+//2020-09-25 - Dmytro Isaiev - commented the next line
+//,if([TASK_WP.Clinical PLM_ONB] > 0, [TASK_WP.Clinical PLM_ONB], [_TASK_WP.Protocol Number])
+;
+//Adding quarte and month
+Left Join(TASK_WP)
+LOAD [_TASK_WP.KEY],
+if( QuarterStart([TASK_WP.Planned Start])>=QuarterStart(Now()) and QuarterStart([TASK_WP.Planned Start])<=QuarterStart (AddMonths(QuarterStart(Now()),9 )) ,'Q' & Ceil(Month([TASK_WP.Planned Start])/3) &' '& Year([TASK_WP.Planned Start])) as [TASK_WP.Quarter]
+//if( QuarterStart([TASK_WP.Planned Start])=QuarterStart(Now()) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),3 )) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),6 )) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),9 )) ,'Q' & Ceil(Month([TASK_WP.Planned Start])/3) &' '& Year([TASK_WP.Planned Start])) as [TASK_WP.Quarter]
+Resident TASK_WP;
+
+Left Join(TASK_WP)
+LOAD [_TASK_WP.KEY],
+if( MonthStart([TASK_WP.Planned Start]) >= MonthStart(Now()) and MonthStart([TASK_WP.Planned Start]) <= MonthStart(AddMonths(Now(),11)) ,MonthName( [TASK_WP.Planned Start])) as [TASK_WP.Month]
+//if( MonthStart([TASK_WP.Planned Start]) >= MonthStart(Now()) and (QuarterStart([TASK_WP.Planned Start])=QuarterStart(Now()) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),3 )) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),6 )) or QuarterStart([TASK_WP.Planned Start])=QuarterStart (AddMonths(QuarterStart(Now()),9 )) ),MonthName( [TASK_WP.Planned Start])) as [TASK_WP.Month]
+Resident TASK_WP;
+Drop Fields 
+[_TASK_WP.Protocol Number],[_Task_WP.flag.Protocol Approval (PSO)],
+[_Task_WP.flag.First Patient Screened (FPS)],[_Task_WP.flag.First Patient In (Enrolled - FPI)],
+[_Task_WP.flag.Last Patient In (Enrolled - LPI)],[_Task_WP.flag.Last Patient Last Visit (LPLV)]
+,[_Task_WP.flag.Database Lock (DBLock)],[_Task_WP.flag.CSR Approval & Delivered (CSR)]
+,[_Task_WP.Study Status.null],[_Task_WP.Date Range]
+;
+
+Left Join(WORKPACKAGE)
+Load [_WP.KEY],[_WP.PROJECT_KEY],[_WP.REGION_COUNTRY_KEY],
+[_WP.KEY] as [_Date_Range_Key],
+if([_WP.Study Status.null] = 1, null(),
+	if(WildMatch([WP.Protocol Number],'*Phase*','*phase*'), 'New', 'On Going'))	as [WP.Study Status (New/On Going)],
+   
+	if(WildMatch([WP.Protocol Number],'*Phase*','*phase*'), 'New', 'On Going')	as [WP.Study Status Planned and Current (New/On Going)],
+if([_WP.Dosing Duration]<=14, [_WP.Dosing Duration]&' days'
+	,if([_WP.Dosing Duration]<=168, floor([_WP.Dosing Duration]/7)&' weeks'
+	,if([_WP.Dosing Duration]>168, floor([_WP.Dosing Duration]/30.1)&' months'
+    ,null())))																							as [WP.Dosing Duration],
+If([WP.Clinical Study Phase]='PHASE_1', date([_WP.G/NG Decision.Phase 1]),
+	If([WP.Clinical Study Phase]='PHASE_2', date([_WP.G/NG Decision.Phase 2]),
+    If([WP.Clinical Study Phase]='PHASE_3', date([_WP.G/NG Decision.Phase 3]))))										as [WP.G/NG Decision],
+if([_WP.Estimated Recruitment Duration]<=14, [_WP.Estimated Recruitment Duration]&' days'
+	,if([_WP.Estimated Recruitment Duration]<=168, floor([_WP.Estimated Recruitment Duration]/7)&' weeks'
+	,if([_WP.Estimated Recruitment Duration]>168, floor([_WP.Estimated Recruitment Duration]/30.1)&' months'
+    ,null())))																							as [WP.Estimated Recruitment Duration],
+Date(If(IsNull([_WP.Protocol Approval (PSO)]),null(),[_WP.Protocol Approval (PSO)]))					as [WP.Protocol Approval (PSO)],
+Date(If(IsNull([_WP.First Patient Screened (FPS)]),null(),[_WP.First Patient Screened (FPS)]))			as [WP.First Patient Screened (FPS)],
+Date(If(IsNull([_WP.First Patient In (Enrolled - FPI)]),null(),[_WP.First Patient In (Enrolled - FPI)]))as [WP.First Patient In (Enrolled - FPI)],
+Date(If(IsNull([_WP.Last Patient In (Enrolled - LPI)]),null(),[_WP.Last Patient In (Enrolled - LPI)]))	as [WP.Last Patient In (Enrolled - LPI)],
+Date(If(IsNull([_WP.Last Patient Last Visit (LPLV)]),null(),[_WP.Last Patient Last Visit (LPLV)]))		as [WP.Last Patient Last Visit (LPLV)],
+Date(If(IsNull([_WP.Database Lock (DBLock)]),null(),[_WP.Database Lock (DBLock)]))						as [WP.Database Lock (DBLock)],
+Date(If(IsNull([_WP.CSR Approval & Delivered (CSR)]),null(),[_WP.CSR Approval & Delivered (CSR)]))		as [WP.CSR Approval & Delivered (CSR)]
+Resident WORKPACKAGE
+;
+
+Drop Fields	[_WP.Estimated Recruitment Duration],
+            [_WP.Protocol Approval (PSO)],
+			[_WP.First Patient Screened (FPS)],
+			[_WP.First Patient In (Enrolled - FPI)],
+			[_WP.Last Patient In (Enrolled - LPI)],
+			[_WP.Last Patient Last Visit (LPLV)],
+			[_WP.Database Lock (DBLock)],
+			[_WP.CSR Approval & Delivered (CSR)],
+            [_WP.G/NG Decision.Phase 1],
+            [_WP.G/NG Decision.Phase 2],
+            [_WP.G/NG Decision.Phase 3]
+;
+///$tab Section
+Left Join(PROJECT)
+Load [_PJT.KEY], 
+[PJT.Specialty Project Name] as [t.Specialty Project Name],
+	if( [PJT.Progress] = 'Pre-Clinical', [PJT.PTRS Benchmark Preclinical/POC Stage],
+	if( [PJT.Progress] = 'Phase 1', [PJT.PTRS Ph1],
+	if( [PJT.Progress] = 'Phase 2', [PJT.PTRS Ph2],
+	if( [PJT.Progress] = 'Phase 3', [PJT.PTRS Ph3],
+	if( [PJT.Progress] = 'Submission', [PJT.PTRS Submission]))))) as [PJT.PTRS to Next Phase]       
+Resident PROJECT;
+Drop Field [PJT.Specialty Project Name];
+Rename Field [t.Specialty Project Name] to [PJT.Specialty Project Name];
+
+//	2018-10-10	RSYSIUK	if field needed to another app, replace to ERD
+PROJECT_ATTRIBUTES:
+Load [_PJT.KEY],
+SubField([PJT.Project Attributes],',') as [PJT.Project Attribute]
+RESIDENT PROJECT;
+
+
+[date_range]: // 2018-11-27	RS
+Load Distinct _Date_Range_Key, '6 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 0.5;
+Concatenate Load Distinct _Date_Range_Key, '12 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 1;
+Concatenate Load Distinct _Date_Range_Key, '18 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 1.5;
+Concatenate Load Distinct _Date_Range_Key, '2 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 2;
+Concatenate Load Distinct _Date_Range_Key, '3 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 3;
+Concatenate Load Distinct _Date_Range_Key, '4 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 4;
+Concatenate Load Distinct _Date_Range_Key, '5 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 5;
+Concatenate Load Distinct _Date_Range_Key, '10 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1
+	And [_WP.Date Range] <= 10;
+Concatenate Load Distinct _Date_Range_Key, 'All' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*')
+	And [_WP.Study Status.null] <> 1;
+    
+Concatenate Load Distinct _Date_Range_Key, '6 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '12 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '18 Months' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '2 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '3 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '4 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '5 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, '10 Years' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+Concatenate Load Distinct _Date_Range_Key, 'All' as [WP.Date Range]
+Resident WORKPACKAGE
+Where WildMatch([WP.Protocol Number],'*Phase*','*phase*') = 0
+And [_WP.Study Status.null] <> 1;
+    
+Drop Fields [_WP.Study Status.null],[_WP.Date Range];
+
+WORKPACKAGE_t:
+Load *, 1 as flag
+Resident WORKPACKAGE
+Where ISNULL([_WP.Sub.Flag]) or Not [_WP.Sub.Flag] = 1
+;
+Drop Table WORKPACKAGE;
+Drop field flag From WORKPACKAGE_t;
+Rename Table WORKPACKAGE_t to WORKPACKAGE;
+
+///$tab DBL-FPS Diff
+/*
+
+temp:
+Load [_WP.KEY] as WK, [_WP.PROJECT_KEY] as PK
+//, [_WP.REGION_COUNTRY_KEY] as RK
+Resident WORKPACKAGE
+Where WildMatch([WP.Activity Name],'Phase 2*','Ph2*')
+;
+
+inner Join
+load [_WP.KEY] as WK, [_TASK_WP.PROJECT_KEY] as PK
+//, [_TASK_WP.REGION_COUNTRY_KEY] as RK
+	,[TASK_WP.Planned Start] as [WP.FPS Date]
+Resident TASK_WP
+Where [TASK_WP.Activity Name] = 'First Patient Screened (FPS)'
+and Exists(WK, [_WP.KEY])
+;
+
+t:
+load [_WP.KEY] as WK, [_TASK_WP.PROJECT_KEY] as PK
+//, [_TASK_WP.REGION_COUNTRY_KEY] as RK
+	,[_TASK_WP.PROJECT_KEY] &'_'& [_TASK_WP.REGION_COUNTRY_KEY] as PRK
+	,[TASK_WP.Planned Start] as [tWP.DBL Date] //, max ([TASK_WP.Planned Start]) as [WP.DBLock_max] 
+Resident TASK_WP
+Where [TASK_WP.Activity Name] = 'Database Lock (DBLock)'
+and Exists(WK, [_WP.KEY])
+order by [_TASK_WP.PROJECT_KEY],[_TASK_WP.REGION_COUNTRY_KEY],[_WP.KEY]//,[TASK_WP.Planned Start]
+;
+
+
+inner Join(temp)
+Load PK,RK,WK, 
+previous(PRK),
+peek(PRK, RecNo(), 't'),
+		if( PRK <> previous(PRK) and PRK <> peek(PRK, RecNo(), 't'), [tWP.DBL Date], 
+        if( PRK = previous(PRK), previous([tWP.DBL Date])
+        )) as [WP.DBL Date]
+ 
+Resident t;
+Drop Table t;
+
+
+Left Join(PROJECT)
+Load PK as [_PJT.PROJECT_KEY], RK as [_PJT.REGION_COUNTRY_KEY],
+avg(
+fabs([WP.DBL Date] - [WP.FPS Date])
+)/30 as [PJT.DBL - FPS Diff]
+Resident temp
+Group By PK, RK
+;
+
+Drop Table temp;
+
+
+*/
+///$tab Data Islands
+dev_phase_transaction:
+Load * Inline [dev_phase_transaction.column, dev_phase_transaction.metric
+Non audited draft report -> IND Submission, 2
+Ph1 Top Line Results Available -> Ph2 First Patient Screened (FPS), 3
+Ph2 Database Lock (DBLock) -> Ph2 First Patient Screened (FPS), 3
+Ph2 Database Lock (DBLock) -> Ph3 First Patient Screened (FPS), 8
+Ph3 Database Lock (DBLock) -> USA (BLA) Submission, 6
+];
+///$tab Major RA
+/*2021-06-14 Olga Vloshchuk - 1. The category of US/EU Submission - Change it to US/EU/Ca Submission and add to it these milestones:
+                           'Canada (NDS) Submission', 'Croatia Submission', 'Macedonia Submission', 'Montenegro Submission', 
+                           'Poland Submission', 'Romania Submission', 'Serbia Submission', 'Switzerland Submission', 'GB Submission'
+                           2. Add another category in a different color called:
+                           IM Submission, to include submission of all other countries (let me know if you need me to send the full list)"
+                           
+                           */
+
+Milestones_Category:
+Load * Inline [
+Milestones_Category.Category, TASK_WP.Activity Name 
+IND/CTA Submission , IND Submission
+IND/CTA Submission , CTA Submission
+US/EU/Ca Submission , USA (NDA) Submission
+US/EU/Ca Submission , USA (sBLA) Submission
+US/EU/Ca Submission , USA (BLA) Submission
+US/EU/Ca Submission , MAA submission
+US/EU/Ca Submission , USA (sBLA) Submission
+US/EU/Ca Submission , Canada (NDS) Submission
+US/EU/Ca Submission , Croatia Submission
+US/EU/Ca Submission , Macedonia Submission
+US/EU/Ca Submission , Montenegro Submission
+US/EU/Ca Submission , Poland Submission
+US/EU/Ca Submission , Romania Submission
+US/EU/Ca Submission , Serbia Submission
+US/EU/Ca Submission , Switzerland Submission
+US/EU/Ca Submission , GB Submission
+RA meeting , Pre-MAA meeting
+RA meeting , Meeting with Rapporteur /Co- Rapporteur
+RA meeting , Finalization day 70- final adoption at CHMP
+RA meeting , Advisory committee meeting at FDA
+RA meeting , OGD meeting with FDA
+RA meeting , FDA- Pre-BLA meeting
+RA meeting , FDA- Type A meeting
+RA meeting , FDA- EoPh1 meeting
+RA meeting , FDA- EoPh2 meeting
+RA meeting , FDA- Post-Marketing Commitments meeting
+RA meeting , FDA- Pre-IND meeting
+RA meeting , FDA- Pre-NDA meeting
+RA meeting , FDA-Type C meeting
+RA meeting , Health Canada Pre-NDS meeting
+RA meeting , PMDA Face to Face Meeting
+RA meeting , BDP Type 1 meeting
+RA meeting , BDP Type 2 meeting
+RA meeting , BDP Type 3 meeting
+RA meeting , BDP Type 4 meeting
+RA meeting , BIA meeting
+IM Submission, Japan (JNDA) Submission
+IM Submission, Argentina Submission
+IM Submission, Armenia Submission
+IM Submission, Australia Submission
+IM Submission, Azerbaijan Submission
+IM Submission, Belarus Submission
+IM Submission, Bosnia Submission
+IM Submission, Brazil Submission
+IM Submission, Chile Submission
+IM Submission, China Submission
+IM Submission, Colombia Submission
+IM Submission, Democratic Republic of The Congo Submission
+IM Submission, Dominican Republic Submission
+IM Submission, GCC Submission
+IM Submission, Georgia Submission
+IM Submission, Hong-Kong Submission
+IM Submission, Hungary Submission
+IM Submission, India Submission
+IM Submission, Israel Submission
+IM Submission, Kazakhstan Submission
+IM Submission, Macau Submission
+IM Submission, Malaysia Submission
+IM Submission, Mexico Submission
+IM Submission, Moldova Submission
+IM Submission, New Zealand Submission
+IM Submission, Paraguay Submission
+IM Submission, Peru Submission
+IM Submission, Puerto Rico Submission
+IM Submission, Russia Submission
+IM Submission, Senegal Submission
+IM Submission, Singapore Submission
+IM Submission, South Africa Submission
+IM Submission, South Korea Submission
+IM Submission, Taiwan Submission
+IM Submission, Thailand Submission
+IM Submission, Turkey Submission
+IM Submission, Ukraine Submission
+IM Submission, Uruguay Submission
+IM Submission, Uzbekistan Submission
+IM Submission, Venezuela Submission
+IM Submission, Vietnam Submission
+];
+
+///$tab Task WP for Custom table report
+//Task WP for Custom table report which include the task where no filter apply for the Specialty Activity type
+
+
+Qualify *;
+Unqualify [_WP.KEY];
+Task_WP_CT:
+Load * resident TASK_WP;
+Unqualify *;
+
+///$tab Section
+//	2018-10-18	RSYSIUK	added dropping tables and fields
+Drop Tables [SKU],[PACK]
+,[FACT_GM_CNTRY_TARGET],[FACT_GM_PROJECT_TARGET],[FACT_GM_LBE_COMMITMENT],[FACT_GM_SUBMISSIONS_LAUNCHES],[FACT_LBE],[FACT_MBI_MEASURES]
+,[Target_Calendar_Subm_AOP],[Target_Calendar_Launch_AOP]
+;
+//	2018-10-22	RSYSIUK	Only 'Speciality'
+
+Inner Join(KeyTable)
+Load distinct [_REGION_COUNTRY_KEY]
+Resident KeyTable
+Where [_REGION_COUNTRY_KEY] = 1289;
+
+Inner Join(PROJECT)
+Load distinct [_PROJECT_KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+
+Inner Join(PRODUCT)
+Load distinct [_PDT.KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+
+Inner Join(WORKPACKAGE)
+Load distinct [_WP.KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+
+Inner Join(TASK_WP)
+Load distinct [_WP.KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+//17-08-2021 excluding activities where Specialty Activity type is epmty on Neta request TASK01850883
+Inner Join(TASK_WP)
+LOAD [_TASK_WP.KEY]
+Resident TASK_WP
+Where
+
+[TASK_WP.Specialty Activity Type (Empty/Not Empty)]='not empty';
+//reloading table MILESTONES with excluded activities where Specialty Activity type is epmty 
+Drop Table [MILESTONES];
+[MILESTONES]:
+LOAD [_TASK_WP.PROJECT_KEY]				as [_PROJECT_KEY]
+    ,[TASK_WP.Activity Type]			as [MLSTN.Name]
+    ,date(min([TASK_WP.Planned Start]))	as [MLSTN.First Planned Date]
+    ,date(min([TASK_WP.Actual Start]))	as [MLSTN.First Actual Date]
+    ,date(max([TASK_WP.Planned Start]))	as [MLSTN.Last Planned Date]
+    ,date(max([TASK_WP.Actual Start]))	as [MLSTN.Last Actual Date]
+Resident TASK_WP
+Group By [_TASK_WP.PROJECT_KEY],[TASK_WP.Activity Type];
+
+///$tab Risk Heatmap report
+// separation for Specialty and Biosimilar projects
+Left Join(PROJECT)
+Load distinct  [_PJT.KEY],
+
+if(WildMatch([PJT.Project Attributes],'*Biosimilar product*')<1,[PJT.Specialty Project Name]) as [Innovative Medicines Project Name],
+
+if(WildMatch([PJT.Project Attributes],'*Biosimilar product*')>=1,[PJT.Specialty Project Name]) as [Biosimilar Project Name],
+if(WildMatch([PJT.Project Attributes],'*Biosimilar product*')>=1,'Yes','No') as [Biosimilar Project Name Yes/No]
+
+Resident PROJECT;
+
+
+Left join (RISK)
+ load Distinct
+[_PJT.KEY]as  [_PROJECT_KEY],
+[Biosimilar Project Name Yes/No] as [_Risk.Biosimilar Project Name Yes/No]
+Resident PROJECT;
+
+
+Left join (RISK)
+ load Distinct
+ [_RISK.RISK_KEY] ,
+if ([_Risk.Biosimilar Project Name Yes/No]='Yes',  [_RISK.PROJECT]&' '&[RISK.Risk Name]&' '&[_RISK.PLM_ONB])    as [Risk Biosimilar],
+if ([_Risk.Biosimilar Project Name Yes/No]='No',   [_RISK.PROJECT]&' '&[RISK.Risk Name]&' '&[_RISK.PLM_ONB])    as [Risk Innovative Medicines]
+Resident RISK;
+
+Left join (RISK)
+ load Distinct
+[_RISK.RISK_KEY] ,
+
+    if([_Risk.Biosimilar Project Name Yes/No]='No',  Text(if ([Risk.Overall Score]=1,'1'
+      , if ([Risk.Overall Score]>=2 and [Risk.Overall Score]<=4,'2-4'
+        , if ([Risk.Overall Score]>=5 and [Risk.Overall Score]<=12,'5-12'
+          , if ([Risk.Overall Score]>=15 and [Risk.Overall Score]<=24,'15-24'
+            , if ([Risk.Overall Score]>=25 ,'25'))))))) as [Risk.Overall Group IM],
+        if([_Risk.Biosimilar Project Name Yes/No]='Yes' ,Text(if ([Risk.Overall Score - GX]=1,'1'
+      , if ([Risk.Overall Score - GX]>=2 and [Risk.Overall Score - GX]<=4,'2-4'
+        , if ([Risk.Overall Score - GX]>=5 and [Risk.Overall Score - GX]<=12,'5-12'
+          , if ([Risk.Overall Score - GX]>=15 and [Risk.Overall Score - GX]<=24,'15-24'
+            , if ([Risk.Overall Score - GX]>=25 ,'25'))))))) as [Risk.Overall Group]
+    
+    
+      
+RESIDENT RISK;
+
+///$tab Risk colors
+/*
+Risk.Probability-SP
+Risk.Impact-SP
+
+*/
+set vBackGroundColorRisk  =  'if(even(max(total <[PJT.Project Code]>aggr(alt(max(Aggr(distinct RangeSum(Above(Count(DISTINCT [PJT.Project Code]), 0, RowNo())),([PJT.Project Code],(TEXT, ASCENDING)))),-999),[PJT.Project Code])))=-1,RGB(231, 230, 226),RGB(178, 177, 174))';
+set vBackGroundColorRAMLST  =  'if(even(max(total <[PJT.Project Name]>aggr(alt(max(Aggr(distinct RangeSum(Above(Count(DISTINCT [PJT.Project Name]), 0, RowNo())),([PJT.Project Name],(TEXT, ASCENDING)))),-999),[PJT.Project Name])))=-1,RGB(255, 255, 255),RGB(233, 234, 236))'
+;
+///$tab Risk History
+[Risk History]:
+LOAD
+PLM_ONB				      as    [_Risk Hist.PLM ONB],
+PROJECT	                  as    [PJT.Project Code],
+OVERALL_SCORE_GX	      as    [Risk Hist.Overal Score GX],
+IMPACT_GX_AS_A_NUMBER     as    [Risk Hist.Impact Gx As A Number],
+PROBABILITY_SP			  as    [Risk Hist.Probability Sp],
+if (DISPLAY_IN_REPORT=1, 'YES','NO')         as    [Risk Hist.Display in Report],
+date(FROM_DATE)           as    [Risk Hist.From Date],
+IF(DELETED='Y',date(DELETED_DATE),	date(TO_DATE)	)	      as    [Risk Hist.To Date],
+VERSION				      as    [Risk Hist.Version],
+ACT_IND				      as    [Risk Hist.Act Ind],
+DELETED				      as    [Risk Hist.Deleted],
+DELETED_DATE			  as    [Risk Hist.Deleted Date],
+IND_OVERALL_SCORE_GX	  as    [Risk Hist.Ind Overall Score Gx],
+IND_IMPACT_GX_AS_A_NUMBER as    [Risk Hist.Ind Impact Gx As A Number],
+IND_PROBABILITY_SP		  as    [Risk Hist.Ind Probability Sp],
+IMPACT_SP				  as    [Risk Hist.Impact Sp],
+SCORE				      as    [Risk Hist.Overal Score SP],
+IND_IMPACT_SP			  as    [Risk Hist.Ind Impact Sp],
+IND_SCORE				  as    [Risk Hist.Ind Score],
+PLM_ONB&'|'&VERSION	      as    [_Risk Hist.Calendar Key]
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract/QVD/DIM_PLM_RISK_HISTORY.QVD]
+(qvd)
+where 
+WildMatch(PROJECT,'SP_*')>0	;
+left join ([Risk History])
+load Distinct
+[_Risk Hist.PLM ONB] ,
+[Risk Hist.Version],
+      Text(if ([Risk Hist.Overal Score SP]=1,'1'
+      , if ([Risk Hist.Overal Score SP]>=2 and [Risk Hist.Overal Score SP]<=4,'2-4'
+        , if ([Risk Hist.Overal Score SP]>=5 and [Risk Hist.Overal Score SP]<=12,'5-12'
+          , if ([Risk Hist.Overal Score SP]>=15 and [Risk Hist.Overal Score SP]<=24,'15-24'
+            , if ([Risk Hist.Overal Score SP]>=25 ,'25')))))) as [Risk Hist.Overall Group SP],
+               Text(if ([Risk Hist.Overal Score GX]=1,'1'
+      , if ([Risk Hist.Overal Score GX]>=2 and [Risk Hist.Overal Score GX]<=4,'2-4'
+        , if ([Risk Hist.Overal Score GX]>=5 and [Risk Hist.Overal Score GX]<=12,'5-12'
+          , if ([Risk Hist.Overal Score GX]>=15 and [Risk Hist.Overal Score GX]<=24,'15-24'
+            , if ([Risk Hist.Overal Score GX]>=25 ,'25')))))) as [Risk Hist.Overall Group Biosimilar]
+    
+RESIDENT [Risk History];
+
+
+
+TempCalendar: 
+Load 
+ TempDate AS OrderDate, 
+ week(TempDate) As Week, 
+ Year(TempDate) As Year, 
+ Month(TempDate) As Month, 
+ Day(TempDate) As Day, 
+ 'Q' & ceil(month(TempDate) / 3) AS Quarter, 
+ Week(weekstart(TempDate)) & '-' & WeekYear(TempDate) as WeekYear, 
+ WeekDay(TempDate) as WeekDay ,
+ MonthEnd(TempDate) as EndMonth
+ 
+;
+
+//=== Generate a temp table of dates === 
+LOAD 
+ date(mindate + IterNo()) AS TempDate
+ ,maxdate // Used in InYearToDate() above, but not kept 
+WHILE mindate + IterNo() <= maxdate;
+
+//=== Get min/max dates from Field ===/
+LOAD
+ AddMonths(MonthEnd(Today()),-12) as mindate,
+ Today() as maxdate
+AUTOGENERATE (2);
+
+
+NoConcatenate
+MinHistRiskDate:
+Load
+Min([Risk Hist.From Date]) as _MinRiskHistDate
+Resident [Risk History];
+
+left Join ( TempCalendar)
+load
+_MinRiskHistDate
+Resident MinHistRiskDate;
+Drop table MinHistRiskDate;
+NoConcatenate
+Calendar:
+Load
+distinct
+if(Month(EndMonth)=Month(Today()-1),Today(),EndMonth)  as EndMonth
+Resident TempCalendar
+where EndMonth>Date(Date#('20230201','YYYYMMDD'),'DD/MM/YYYY')  
+//and EndMonth<= MonthEnd((Today()-1))
+//and EndMonth>=AddMonths(Month(Today()-1),-12)
+;
+Drop Table TempCalendar;
+
+NoConcatenate
+
+Temp:
+Load Distinct
+ [_Risk Hist.Calendar Key],
+ [Risk Hist.From Date] as [From Date],
+ [Risk Hist.To Date] as [To Date]
+ Resident [Risk History];
+ 
+
+inner join (Calendar)
+
+
+IntervalMatch (EndMonth)
+
+
+LOAD [From Date], [To Date]
+
+
+Resident Temp;
+
+NoConcatenate
+CalendarT1:
+Load Distinct
+[_Risk Hist.Calendar Key],
+[From Date],
+[To Date]
+Resident Temp;
+Drop Table Temp;
+
+left Join
+(CalendarT1)
+Load Distinct
+[From Date]
+,[To Date]
+,if(Month(EndMonth)=Month(Today()-1),Today()-1,EndMonth)  as EndMonth
+Resident Calendar;
+Drop table Calendar; Rename Table CalendarT1 to Calendar;
+
+///$tab R&D Inn Medicine trackable activities
+//Weekly push report of changes of the following milestones for R&D innovator Medicine
+
+
+
+R_D_IM_Changes_T1:
+Load
+ 
+    ONB,
+    PROJECT,
+    ACTIVITY_NAME,
+    date(PLANNED_START) as PLANNED_START ,
+    QuarterName(date(PLANNED_START)) as Quarter_Planned_Start,
+    FROM_DATE,
+    TO_DATE,
+    VERSION,
+    ACT_IND,
+    DELETED,
+    DELETED_DATE,
+    IND_PLANNED_START
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract/QVD/DIM_PLM_TASK_OF_WP_HISTORY.QVD]
+(qvd)
+where DELETED='N'
+and WildMatch(PROJECT,'*SP*')>0;
+
+
+[Current Week]:
+Load distinct 
+	PROJECT               as [Current Week.Project Code_TMP] ,
+    ACTIVITY_NAME         as [Current Week.Milestone Name],
+    ONB                   as [_Current Week.ONB],
+    PLANNED_START         as [Current Week.New Milestone Date]
+    //Quarter_Planned_Start as [_Current Week.Q PS],
+   //FROM_DATE             as [Current Week.From Date],
+  // TO_DATE               as [Current Week.To Date]
+ Resident R_D_IM_Changes_T1
+ 
+Where 1=1
+
+//and [VERSION]	>1
+
+and Today() >=FROM_DATE
+and Today()<=Date(Alt(TO_DATE -1, Date#('12/31/2999','mm/dd/yyyy')),'DD-MMM-YYYY')
+;
+
+
+
+NoConcatenate
+
+[Previous Week]:
+Load distinct 
+	PROJECT               as [Previous Week.Project Code_TMP] ,
+    ACTIVITY_NAME         as [Previous Week.Milestone Name],
+    ONB                   as [_Previous Week.ONB],
+    PLANNED_START         as [Previous Week.Previous Milestone Date]
+   // Quarter_Planned_Start as [_Previous Week.Q PS]
+   // FROM_DATE             as [Previous Week.From Date],
+   // TO_DATE               as [Previous Week.To Date]
+ Resident R_D_IM_Changes_T1
+ 
+Where 1=1
+
+
+
+and FROM_DATE <Today() -7 
+and Date(Alt(TO_DATE , Date#('12/31/2999','mm/dd/yyyy')),'DD-MMM-YYYY')>=Today() -7;
+Drop Tables R_D_IM_Changes_T1;
+
+
+[R&D IM Changes of ML]:
+//Loading current list of Project with needed Project type
+Load distinct 
+
+    [PJT.Project Code]           as  [R&D IM Changes of ML.Project Code],
+    
+    [_PROJECT_KEY]
+    Resident PROJECT
+
+where WildMatch([PJT.Project Code],'*SP*')>0
+ ;
+ 
+/*
+MilestonesList:
+LOAD * INLINE [Milestones  
+IND Submission,
+CTA Submission',
+First Patient In (Enrolled - FPI)];
+
+Join ([R&D IM Changes of ML])
+Load Milestones as [R&D IM CML.Milestone Name]
+Resident MilestonesList;
+Drop Table MilestonesList;
+
+*/
+NoConcatenate
+Temp_ONB:
+Load distinct 
+[Current Week.Project Code_TMP] as [_Temp_ONB. Project Code],
+[Current Week.Milestone Name] ,
+[_Current Week.ONB] as [_Temp_ONB.Key],
+[Current Week.Project Code_TMP] & [Current Week.Milestone Name]&[_Current Week.ONB] as [_Temp.Key]
+Resident [Current Week];
+
+Concatenate (Temp_ONB)
+Load Distinct
+[Previous Week.Project Code_TMP] as [_Temp_ONB. Project Code] ,
+[Previous Week.Milestone Name] as [Current Week.Milestone Name],
+[_Previous Week.ONB] as [_Temp_ONB.Key],
+[Previous Week.Project Code_TMP] & [Previous Week.Milestone Name]&[_Previous Week.ONB] as [_Temp.Key]
+Resident [Previous Week];
+
+Left Join ([R&D IM Changes of ML])
+Load Distinct
+ [_Temp_ONB. Project Code]  as [R&D IM Changes of ML.Project Code],
+[Current Week.Milestone Name]   as [R&D IM CML.Milestone Name],
+[_Temp_ONB.Key],
+[_Temp.Key]
+Resident Temp_ONB;
+Drop table Temp_ONB;
+
+Left Join ([R&D IM Changes of ML])
+Load Distinct
+[Current Week.Project Code_TMP] & [Current Week.Milestone Name]&[_Current Week.ONB] as [_Temp.Key],
+
+*
+Resident [Current Week]
+;
+Drop table [Current Week];
+
+left Join  ([R&D IM Changes of ML])
+Load Distinct
+[Previous Week.Project Code_TMP] & [Previous Week.Milestone Name]&[_Previous Week.ONB] as [_Temp.Key],
+*
+Resident [Previous Week]
+;
+DROP table [Previous Week];
+
+NoConcatenate
+
+[R&D IM Changes of ML\T]:
+
+Load
+*,
+[Current Week.New Milestone Date]-[Previous Week.Previous Milestone Date] as [R&D IM Changes of ML.Changes in days]
+Resident [R&D IM Changes of ML]
+
+where if(len([Previous Week.Previous Milestone Date])>0,[Previous Week.Previous Milestone Date],0)<>if(len([Current Week.New Milestone Date])>0,[Current Week.New Milestone Date],0)
+and
+(
+if(len([Previous Week.Previous Milestone Date])>0,[Previous Week.Previous Milestone Date],0)-if(len([Current Week.New Milestone Date])>0,[Current Week.New Milestone Date],0)>30
+or
+if(len([Previous Week.Previous Milestone Date])>0,[Previous Week.Previous Milestone Date],0)-if(len([Current Week.New Milestone Date])>0,[Current Week.New Milestone Date],0)<-30
+or
+QuarterName(if(len([Previous Week.Previous Milestone Date])>0,[Previous Week.Previous Milestone Date],0))<> QuarterName(if(len([Current Week.New Milestone Date])>0,[Current Week.New Milestone Date],0))
+)
+
+;
+drop table [R&D IM Changes of ML];
+Rename Table [R&D IM Changes of ML\T] to [R&D IM Changes of ML]
+;
+
+
+
+left join ([R&D IM Changes of ML])
+LOAD distinct 
+	[_WP.KEY] as [Temp.WP Key],
+
+[TASK_WP.Internal Number] as [_Temp_ONB.Key]
+resident TASK_WP;
+
+
+left join ([R&D IM Changes of ML])
+LOAD distinct 
+	[_WP.KEY] as  [Temp.WP Key],
+    [WP.Clinical Study Phase] as [R&D IM Changes of ML.Clinical Study Phase],
+    [WP.Protocol Number] as [R&D IM Changes of ML.Protocol number]
+    Resident [WORKPACKAGE];
+    Drop Field [Temp.WP Key], [Current Week.Project Code_TMP], [Previous Week.Project Code_TMP],[Previous Week.Milestone Name],[Current Week.Milestone Name];
+ NoConcatenate
+ Temp:
+   Load
+   *
+   resident [R&D IM Changes of ML]
+   where 
+   [R&D IM CML.Milestone Name]<>'First Patient In (Enrolled - FPI)'
+   or
+   ([R&D IM CML.Milestone Name]='First Patient In (Enrolled - FPI)'
+   and ([R&D IM Changes of ML.Clinical Study Phase]='PHASE_2' or [R&D IM Changes of ML.Clinical Study Phase]='PHASE_3')
+   );
+   Drop Table [R&D IM Changes of ML];
+   Rename Tables Temp to [R&D IM Changes of ML];
+  
+
+
+
+
+
+///$tab Biosimilar report Milestones calculations
+//Loading milestones/activities  for the Biosimilar project
+//Qualify *;
+[Biosimilar_Milestones/T]:
+load distinct 
+[_TASK_WP.PROJECT_KEY],
+[TASK_WP.Project] as [BS_MLSTN.Project],
+if(Match([TASK_WP.Activity Name],'Initial Similarity Assessment','Ph1 GMP DP Available for Clinical Supply Labeling'
+,'Ph3 GMP DP Available for Clinical Supply Labeling','Phase 3 DS batches','IND Submission','DS PPQ batch manufacturing','DP PPQ batch manufacturing'
+,'DP PPQ stability read out','USA (BLA) Submission','USA (BLA) Target Approval','USA (BLA) Launch','Europe (MAA) Submission','Europe (MAA) Target Approval',
+'Europe (MAA) Launch'),'Milestones',
+
+if(Match([TASK_WP.Activity Name],'First Patient Screened (FPS)','Top Line Results Available','CSR Approved & Delivered (CSR)')>=1
+and Wildmatch([TASK_WP.WBS Element],'*PK/PD*')>=1,'PK/PD',
+If(
+Match([TASK_WP.Activity Name],'First Patient Screened (FPS)','Top Line Results Available for Main Treatment Period','CSR Approved & Delivered (CSR) for Main Treatment Period')>=1
+and Wildmatch([TASK_WP.WBS Element],'*Efficacy & Safety*')>=1,
+'Efficacy & Safety Study'
+
+)
+
+)) as [BS_MLSTN.Categoty]
+
+
+,[TASK_WP.WBS Element] as [BS_MLSTN.WBS Element]
+,[TASK_WP.Activity Name] as [BS_MLSTN.Activity Name] 
+,[TASK_WP.Planned Start] as [BS_MLSTN.Planned Start] 
+,if ([TASK_WP.Planned Start]>=Today(),[TASK_WP.Planned Start], Null()) as Future_Planned_DT
+,if ([TASK_WP.Planned Start]<Today(),[TASK_WP.Planned Start], Null ()) as Past_Planned_DT
+
+resident TASK_WP
+where 
+Match([TASK_WP.Activity Name],'Initial Similarity Assessment','Ph1 GMP DP Available for Clinical Supply Labeling'
+,'Ph3 GMP DP Available for Clinical Supply Labeling','Phase 3 DS batches','IND Submission','DS PPQ batch manufacturing','DP PPQ batch manufacturing'
+,'DP PPQ stability read out','USA (BLA) Submission','USA (BLA) Target Approval','USA (BLA) Launch','Europe (MAA) Submission','Europe (MAA) Target Approval',
+'Europe (MAA) Launch')
+or (
+Match([TASK_WP.Activity Name],'First Patient Screened (FPS)','Top Line Results Available','CSR Approved & Delivered (CSR)')>=1
+and Wildmatch([TASK_WP.WBS Element],'*PK/PD*')>=1
+)
+or (
+Match([TASK_WP.Activity Name],'First Patient Screened (FPS)','Top Line Results Available for Main Treatment Period','CSR Approved & Delivered (CSR) for Main Treatment Period')>=1
+and Wildmatch([TASK_WP.WBS Element],'*Efficacy & Safety*')>=1
+)
+//WildMatch([TASK_WP.WBS Element],'*Phase 3 St*')
+
+; 
+Left Join ([Biosimilar_Milestones/T])
+load
+[BS_MLSTN.Project]
+,[BS_MLSTN.Categoty]
+//,[TEMP.TASK_WP.WBS Element]
+,[BS_MLSTN.Activity Name]
+,date(Min([Future_Planned_DT]) )as Min_Ft_dt
+,date (Max([Past_Planned_DT]) )as Max_Past_dt 
+resident [Biosimilar_Milestones/T]
+Group by [BS_MLSTN.Project]
+,[BS_MLSTN.Categoty]
+,[BS_MLSTN.Activity Name] ;
+[Biosimilar_Milestones]:
+Load
+*,
+Alt (Min_Ft_dt,Max_Past_dt ) as [BS_MLSTN.Date]
+Resident [Biosimilar_Milestones/T];
+Drop Table [Biosimilar_Milestones/T];
+
+
+
+
+
+///$tab List RA milestones
+Left Join(TASK_WP)
+Load Distinct
+[_TASK_WP.KEY],
+'RA Milestone' as [RA Milestone]
+Resident TASK_WP
+where (
+WildMatch([TASK_WP.Activity Name],'*Launch*','*Submission*','*Target Approva*')>0
+and WildMatch([TASK_WP.Activity Name],'GNG to Pre-Submission',
+'General Submission',
+'General Target Approval',
+'Go to Submission Phase',
+'Governance Meeting -  Go/No Go to Submission',
+'Governance Meeting - Go/No Go to Submission',
+'Launch',
+'Submission Ready Component/QC',
+'Submission Ready Component/QC'
+)<1)
+or WildMatch([TASK_WP.Activity Name],
+'Pre-MAA meeting',
+'Meeting with Rapporteur /Co- Rapporteur',
+'Advisory committee meeting at FDA ',
+'OGD meeting with FDA ',
+'FDA- Pre-BLA meeting',
+'FDA- Type A meeting ',
+'FDA- EoPh1 meeting ',
+'FDA- EoPh2 meeting ',
+'FDA- Post-Marketing Commitments meeting ',
+'FDA- Pre-IND meeting ',
+'FDA- Pre-NDA meeting',
+'FDA-Type C meeting ',
+'Health Canada Pre-NDS meeting',
+'PMDA Face to Face Meeting',
+'BPD Type 1 meeting',
+'BPD Type 2 meeting',
+'BPD Type 3 meeting',
+'BPD Type 4 meeting',
+'BIA meeting')>0
+
+
+;
+
+
+///$tab Clinical MS
+Left Join(TASK_WP)
+Load Distinct
+[_TASK_WP.KEY],
+'Clinical Milestone' as [Clinical Milestone]
+Resident TASK_WP
+where 
+WildMatch([TASK_WP.Activity Name],
+
+'Final Protocol Approval (PSO)' ,'Screening Initiated (FPS)','First Patient Screened (FPS)','First Patient In (Enrolled - FPI)',
+'Last Patient In (Enrolled - LPI)','Last Patient Last Visit (LPLV)','Database Lock (DBLock)'
+,'Primary Completion Date','CSR Approved & Delivered (CSR)')>0
+
+;
+
+///$tab Innovative Pipeline
+Left Join(TASK_WP)
+Load Distinct
+[_TASK_WP.KEY],
+'Innovative Pipeline' as [Innovative Pipeline MLST]
+Resident TASK_WP
+where (
+WildMatch([TASK_WP.Activity Name],'*Gate*2*Nomination*','*Gate*3*First in Human*','*Gate*4*Proof of Concept*',
+'*Gate*5*Full Development*','*Gate*6*Submission*')>0
+or WildMatch([TASK_WP.Activity Name], '*Launch 1st*','Target Approval 1st')>0)
+//and year(Alt([TASK_WP.Actual Start],[TASK_WP.Planned Start]))<=Year(Today())+10
+;
+///$tab Process Report
+LIB CONNECT TO 'GLBIPRD_OLE_DB (tevacorp_admqlik)';
+
+SQL UPDATE MBIDW_MNG.PROCESS_REPORT T 
+SET 
+DW2=1,
+DW2_DATE=SYSDATE,
+READY_FOR_DWH=1,
+READY_FOR_DWH_DATE=SYSDATE
+WHERE PROCESS_NAME='MBI_QS_RD_SPECIALITY_PLM'
+AND T.STARTING_DATE=
+(   
+    SELECT MAX(STARTING_DATE)
+    FROM MBIDW_MNG.PROCESS_REPORT
+    WHERE PROCESS_NAME='MBI_QS_RD_SPECIALITY_PLM'
+
+);
+
+SQL COMMIT;
+
+
+
+
+///$tab Exit
+Exit Script;

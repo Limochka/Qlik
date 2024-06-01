@@ -1,0 +1,1257 @@
+///$tab Development list
+/*
+10032021  -Olga Voloshchuk - Changed master items 
+11032021  -Olga Voloshchuk - added new errors in data Accuracy report - changes to the loading script and the chart, variables expressions
+11052021  -Olga Voloshchuk  - for the 4 new errors (Missing HiH Initiation date, Mistakes in Project MS- HiH Initiation, Missing Handover date, Mistakes in Project MS- Handover)
+                                please remove all project types except: 
+                                IH Development – Original
+                                Co-Development
+                                (meaning only errors with these 2 project types should appear in the report)
+                                
+
+
+18052021  Olga Voloshchuk    changes in the sheets MMR,  tri weekly full report, submission list, launches report
+                              if the region = EU --> take the value from "START_FILING_NEW"
+                               if the region = not EU --> take the value from PLM_PROJECT_BI.ra_strat_filing_strat
+18052021  Olga Voloshchuk    TPO Report for procurement sheet added initiali developmed by Tamar
+                             
+31052021  Olga Voloshchuk    added column Risks Comments to the Risk sheet
+04062021  Olga Voloshchuk    removing not existing projects from PLM see Exit Sections
+04062021  Olga Voloshchuk    in Section 'Country Region to Project' Join the Country region table directly to Project , to exclude the cases where non EU workpackages are conected to the different country than project itself.     
+04062021  Olga Voloshchuk    removing not existing projects from PLM see Exit Sections
+30062021  Olga Voloshchuk    MMR report: renamed the field name 'Bi-weekly report comments' to 'Tri-weekly comments'
+05082021  Olga Voloshchuk    Updated the Logic for Data Accuracy for the errors Missing HiH Initiation date, Mistakes in Project MS- HiH Initiation,
+                             Missing Handover date, Mistakes in Project MS- Handover
+14092021  Olga voloshchuk    Added vSterileFilter for Anastasia req, also add this variable as master item                            
+                             
+19012022  Olga Voloshchuk    Updated the errors logic in Data Accuracy report by Anastasi req TASK01977652
+                             for the below errors
+                             Missing Handover date
+                             Missing HiH Initiation date
+                             Mistakes in Project MS- Handover
+                             Mistakes in Project MS- HiH Initiation
+16032022  Olga Voloshchuk  Added with new columns 
+                           in sheets MMR Report  :PJT.Target Validation Manufacture Start Date, 
+                           PJT.Process Design Manufacture Start Date,
+                           PJT.Target Validation Manufacture Start Date 
+                             added in load script and Sheet in MMR Report Trade Dress Approval
+                             Removed columns from MMR Report - API for Validation and Launch Build Date
+                             Pre-Validation Start Date
+                             Target Validation Start Date
+                             
+
+23032022  Olga Voloshchuk   Added new target values for sub report
+05042022  Sagar Lakshminarayana GBI-1718 Modify the coloring to the table in page Risks and Critical Taks & Decision
+
+09052022  Olga Voloshchuk   Updated predefine filter with Preliminary Work Approved, prev Active for the sheets
+06072022  Viktor Kupriianovych Updated predefine filter for field [PJT.Status]
+21072022  Olga Voloshchuk    added a development site for source project
+
+*/
+///$tab Main
+Binary [LIB://PLM_ERD_App (tevacorp_admqlik)];
+//Binary [lib://Apps (tevacorp_sredij)]/68814e9b-613b-46e1-a9b3-04f4dc8cd393;
+
+
+
+SET ThousandSep=',';
+SET DecimalSep='.';
+SET MoneyThousandSep=',';
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#,##0.00;($#,##0.00)';
+SET TimeFormat='h:mm:ss TT';
+SET DateFormat='DD-MMM-YYYY';
+SET TimestampFormat='DD-MMM-YYYY';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-US';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+
+LET vCurYear = Year(Now());
+LET vCurYearStart = YearStart(now());
+LET vCurYearEnd = YearEnd(now());
+SET HidePrefix = '_';
+//removing PLP data
+
+
+Inner Join ([KeyTable])
+Load Distinct
+[_SA_PLP_PROJECT]
+Resident KeyTable
+where 
+[_SA_PLP_PROJECT]='N';
+
+///$tab islands
+/*
+    2, Missing dev. site
+    3, Missing mfg. site
+ Removed on Anastasia request    TASK02495643 30.05.2023
+ 
+    
+    */
+ErrorTypesMenu:
+LOAD * INLINE [
+    _ErrorTypeCode, ErrorType  
+    1, Missing (first) subm. date
+    4, Missing GR&D project contact
+    5, Missing exclusivity status for US only
+    7, Missing R&D tri-weekly comments
+    9, Mistakes in Project MS-submission batch mng
+    10, Mistakes in Project MS-bio start
+    11, Mistakes in Project MS-final bio report
+    12, Mistakes in Project MS-submission date
+    13, Mistakes in Project MS-stability 1st
+    14, Missing bio clinical strategy comments
+	81, Missing Kick-off Date
+	82, Expired Kick-off Date
+    83, Mistakes in Project MS- kick off date
+    21, Missing HiH Initiation date
+    22, Mistakes in Project MS- HiH Initiation
+    23, Missing Handover date
+    24, Mistakes in Project MS- Handover
+
+];
+
+
+RNDTarget:
+LOAD * INLINE [
+    R&D.Target Year, R&D.Target Region, R&D.Target Country, R&D.Target Projects
+    2018, US, US, 35
+    2018, EU, '', 15
+    2018, IM, '', 38
+    2018, CA, CA, 4
+    2018, JP, JP, 4
+    2018, US FTF, '', 10
+    2019, US, US, 25
+	2019, EU, '', 13
+	2019, CA, CA, 6
+	2019, JP, JP, 2 
+    2019, IM, AR, 2
+	2019, IM, BR, 1
+	2019, IM, CL, 5
+	2019, IM, IL, 6
+	2019, IM, MX, 4
+	2019, IM, NZ, 2
+	2019, IM, PE, 3
+	2019, IM, RU, 1
+	2019, IM, SG, 4
+	2019, IM, TH, 6
+	2019, IM, VN, 2
+	2019, IM, ZA, 4
+    2020, US,'', 22
+    2020, EU,'', 14
+    2020, IM ,'',50
+    2020, CA ,'',5
+    2021, US,'', 22
+    2021, EU,'', 15
+    2021, CA,'', 6
+    2021, IM,'', 45
+    2022, IM,'', 53
+    2022, US,'', 22
+    2022, EU,'', 15
+    2022, CA,'', 10
+    2023, IM,'', 40
+    2023, US,'', 15
+    2023, EU,'', 12
+    2023, CA,'', 8
+
+
+    
+];
+
+
+summary:
+Load * Inline [_Dim.Summary
+Details
+Summary];
+
+summary2:
+Load * Inline [_Dim.Summary2,_Dim.Summary4
+"Pool (LBE, counted subm)", Pool
+Completed, Actual
+Target, Target
+Not counted];
+
+summary3:
+Load * Inline [_Dim.Summary3
+Pool
+Target
+Actual submission/ MS achieved];
+
+
+
+[Dev. sites/ dosage forms]:
+
+
+
+
+
+
+
+
+///$tab DATA_ACCURACY
+//adding Market column from COUNTRY_Region table to the Project table o.voloshchuk
+
+Left Join(PROJECT)
+Load distinct
+[_CNTRY.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+[CNTRY.Market] as [PJT.Market]
+,[CNTRY.R&D Region Name] as [_PJT.R&D Region Name]
+,[CNTRY.R&D Region Name] as [PJT.R&D Region Name]
+Resident COUNTRY_REGION
+;
+
+//adding flags req Anastasia TASK02685516 12/2023
+Left Join (PROJECT)
+load Distinct
+[_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+date (Min(Alt([TASK_WP.Actual Start],[TASK_WP.Planned Start])) ) as [PJT.Manufacture Submission Batches 1st] 
+Resident TASK_WP
+where 
+
+
+[TASK_WP.Activity Name]='Manufacture Submission Batches 1st'
+
+group by [_TASK_WP.PROJECT_KEY];
+
+
+
+Left Join (PROJECT)
+load Distinct
+[_PJT.KEY],
+1 as [_PJT.Data accuracy Launch Type flag]
+Resident PROJECT
+where [PJT.Launch Type]='New Launch' or IsNull([PJT.Launch Type]);
+
+Left Join (PROJECT)
+load Distinct
+[_PJT.KEY],
+[PJT.Development site] as [PJT.Data accuracy Development site]
+Resident PROJECT
+where [PJT.Development site]<>'N/A' 
+
+;
+
+//adding flags req Anastasia TASK02685516 12/2023
+
+
+//additional errors
+Left Join (PROJECT)
+load Distinct
+[_PJT.KEY]
+//Missing HiH Initiation date
+, if (
+IsNull([PJT.HiH Initiation Date])
+//added on TASK02685516 12/2023
+and Year([PJT.1st Submission Date] )>=2019
+and len([PJT.Manufacture Submission Batches 1st])>0
+and [_PJT.Data accuracy Launch Type flag]=1
+//added on TASK02685516 12/2023
+and [PJT.Progress]<>'Launched' 
+//and (WildMatch([PJT.Launch Type],'Inline-GM and P','Not New Launch','Not New Launch-EU','Not New Launch-IM','Not New Launch-TGO')=0 or IsNull([PJT.Launch Type])) 
+and (WildMatch([PJT.Project type],'IH Development – Original','IH Development – Minimal Leverage')>0 or (WildMatch([PJT.Project type],'Co-Development')>0 and WildMatch([_PJT.R&D Region Name],'US')>0 )) and WildMatch([PJT.R&D Region Name],'IM','CA')<1,1,0
+) as [PJT.flag Missing HiH Initiation date]
+//Mistakes in Project MS- HiH Initiation
+, if (
+[PJT.HiH Initiation Date A/P] <>'A' and [PJT.HiH Initiation Date]<Today()
+//added on TASK02685516 12/2023
+and Year([PJT.1st Submission Date]  )>=2019
+and len([PJT.Manufacture Submission Batches 1st])>0
+and [_PJT.Data accuracy Launch Type flag]=1
+//added on TASK02685516 12/2023
+and [PJT.Progress]<>'Launched' 
+//and (WildMatch([PJT.Launch Type],'Inline-GM and P','Not New Launch','Not New Launch-EU','Not New Launch-IM','Not New Launch-TGO')=0 or IsNull([PJT.Launch Type])) 
+and (WildMatch([PJT.Project type],'IH Development – Original','IH Development – Minimal Leverage')>0 or (WildMatch([PJT.Project type],'Co-Development')>0 and WildMatch([_PJT.R&D Region Name],'US')>0 )) and WildMatch([PJT.R&D Region Name],'IM','CA')<1 ,1,0
+) as [PJT.flag Mistakes in Project MS- HiH Initiation]
+//Missing Handover date
+, if (
+IsNull([PJT.Handover Date])
+//added on TASK02685516 12/2023
+and len([PJT.1st Submission Date] )>0
+and [_PJT.Data accuracy Launch Type flag]=1
+
+
+//added on TASK02685516 12/2023
+and [PJT.Progress]<>'Launched' 
+//and (WildMatch([PJT.Launch Type],'Inline-GM and P','Not New Launch','Not New Launch-EU','Not New Launch-IM','Not New Launch-TGO')=0 or IsNull([PJT.Launch Type])) 
+and (WildMatch([PJT.Project type],'IH Development – Original','IH Development – Minimal Leverage')>0 or (WildMatch([PJT.Project type],'Co-Development')>0 and WildMatch([_PJT.R&D Region Name],'US')>0 )) and WildMatch([PJT.R&D Region Name],'IM','CA')<1,1,0
+) as [PJT.flag Missing Handover date]
+//Mistakes in Project MS- Handover
+, if (
+[PJT.Handover Date A/P]<>'A' and [PJT.Handover Date]<Today()
+
+//added on TASK02685516 12/2023
+and len([PJT.1st Submission Date] )>0
+and [_PJT.Data accuracy Launch Type flag]=1
+
+
+//added on TASK02685516 12/2023
+
+and [PJT.Progress]<>'Launched' 
+//and (WildMatch([PJT.Launch Type],'Inline-GM and P','Not New Launch','Not New Launch-EU','Not New Launch-IM','Not New Launch-TGO')=0 or IsNull([PJT.Launch Type]))
+and (WildMatch([PJT.Project type],'IH Development – Original','IH Development – Minimal Leverage')>0 or (WildMatch([PJT.Project type],'Co-Development')>0 and WildMatch([_PJT.R&D Region Name],'US')>0 )) and WildMatch([PJT.R&D Region Name],'IM','CA')<1,1,0
+) as [PJT.flag Mistakes in Project MS- Handover]
+Resident PROJECT
+
+;
+
+///$tab Static filter to Risk and action items report
+/*
+TEMP_RISK:
+
+
+load distinct 
+[_RISK.PROJECT],
+1 as [_Risk_AC_I.Filter_1] 
+
+
+Resident [RISK]
+where [RISK.Display in reports]='YES'
+;
+
+Inner  Join(TEMP_RISK)
+load distinct 
+[PJT.Project Code] as [_RISK.PROJECT],
+1 as [_Risk_AC_I.Filter_2] 
+
+
+Resident [PROJECT]
+Where [PJT.Status]='Active' and not WildMatch([PJT.Project type],'IH Development – Full Leverage', 'In-Licensing') 
+
+;
+*/
+Left Join(PROJECT)
+load Distinct
+[_RISK.PROJECT] as [PJT.Project Code],
+1 as [Risk.report_filter]
+Resident [RISK]
+//where [_Risk_AC_I.Filter_2] =1 and [_Risk_AC_I.Filter_1]=1
+;
+//Drop Table TEMP_RISK;
+
+/*
+TEMP_ACT:
+
+
+load distinct 
+[_ACT_IT.Project],
+1 as [_Risk_AC_I.Filter_1] 
+
+
+Resident [ACTION ITEMS]
+where [ACT_IT.Display in reports]='YES'
+;
+
+Inner  Join(TEMP_ACT)
+load distinct 
+[PJT.Project Code] as [_ACT_IT.Project],
+1 as [_Risk_AC_I.Filter_2] 
+
+
+Resident [PROJECT]
+Where [PJT.Status]='Active' and not WildMatch([PJT.Project type],'IH Development – Full Leverage', 'In-Licensing') 
+
+;
+*/
+Left Join(PROJECT)
+load Distinct
+[_ACT_IT.Project] as [PJT.Project Code],
+1 as [ACT_I.report_filter]
+Resident [ACTION ITEMS]
+//where [_Risk_AC_I.Filter_2] =1 and [_Risk_AC_I.Filter_1]=1
+;
+
+
+
+//DROP Table TEMP_ACT;
+///$tab Section
+Left Join(PROJECT)
+Load [_TASK_WP.PROJECT_KEY] as [_PJT.KEY],
+Date(min([_Task_WP.flag.Ops Readiness])) as [PJT.Ops Readiness Date],
+Date(min([_Task_WP.flag.Pre-Validation Start])) as [PJT.Pre-Validation Start Date],
+Date(min([_Task_WP.flag.Launch Build Start])) as [PJT.Launch Build Start Date],
+Date(min([_Task_WP.flag.Target validation Start])) as [PJT.Target Validation Start Date],
+Date(min([_Task_WP.flag.API for Validation and Launch Build])) as [PJT.API for Validation and Launch Build Date]
+
+Resident TASK_WP
+Where [_Task_WP.flag.Ops Readiness]>0 Or [_Task_WP.flag.Pre-Validation Start]>0
+Or [_Task_WP.flag.Launch Build Start]>0 Or [_Task_WP.flag.Target validation Start]>0
+Or [_Task_WP.flag.API for Validation and Launch Build]>0
+Group By [_TASK_WP.PROJECT_KEY]
+//,[_TASK_WP.REGION_COUNTRY_KEY]
+;
+//16.03.2022 on Anastasia req. adding new milestones TASK02050882,TASK02063374
+Left Join(PROJECT)
+Load [_PROJECT_KEY] as [_PJT.KEY],
+Date([MLSTN.First Planned Date]) as [PJT.Trade Dress Approval]
+Resident [MILESTONES]
+where [MLSTN.Name]='Trade Dress Approval';
+
+
+
+
+
+
+
+
+
+
+Left Join(PROJECT)
+Load 
+[_PROJECT_KEY] as [_PJT.KEY],
+Concat(API.Supplier,',') as [PJT.Api Supplier Concat]
+Resident API_SUPPLIER_N_N_BI 
+Group by _PROJECT_KEY
+;
+
+Left Join(COUNTRY_REGION)
+Load 
+[_CNTRY.REGION_COUNTRY_KEY],
+[CNTRY.R&D Region Name],
+if(match([CNTRY.R&D Region Name],'GM','JP'), 'IM', [CNTRY.R&D Region Name]) as [CNTRY.R&D Region Name_2]
+Resident COUNTRY_REGION
+;
+
+Drop Field [CNTRY.R&D Region Name];
+Rename Field [CNTRY.R&D Region Name_2] to [CNTRY.R&D Region Name];
+
+
+left join (COUNTRY_REGION)
+Load
+[_CNTRY.REGION_COUNTRY_KEY],
+[CNTRY.R&D Region Name],
+IF(Match([CNTRY.R&D Region Name],'IM','EU','CA','US', 'North America')>0,[CNTRY.R&D Region Name]) as [CNTRY.R&D Region Name_3]
+Resident COUNTRY_REGION;
+///$tab PJT_HIST
+// get data from hist table
+hist:
+Load distinct 
+	[PROJECT_CODE],
+    FROM_DATE,
+    TO_DATE,
+    VERSION,
+    FIRST_LAUNCH_DATE,
+    FIRST_SUBMISSION_DATE
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where [ACT_IND] <> 1;
+
+Left Join
+Load distinct 
+	[PROJECT_CODE],
+    FIRST_LAUNCH_DATE as CUR_1ST_LAUNCH_DATE,
+    FIRST_SUBMISSION_DATE as CUR_1ST_SUBM_DATE
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where [ACT_IND] = 1;
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// find last version with different dim value
+Left Join(hist)
+Load distinct 
+	[PROJECT_CODE],
+    max(VERSION)							AS [VERSION],
+    1										AS [hist.F_FIRST_SUBMISSION_DATE]
+Resident hist
+where CUR_1ST_SUBM_DATE <> FIRST_SUBMISSION_DATE
+Group by [PROJECT_CODE];
+
+Left Join(hist)
+Load distinct 
+	[PROJECT_CODE],
+    max(VERSION)							AS [VERSION],
+    1										AS [hist.F_FIRST_LAUNCH_DATE]
+Resident hist
+where CUR_1ST_LAUNCH_DATE <> FIRST_LAUNCH_DATE
+Group by [PROJECT_CODE];
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// if there were no changes, get creation date
+temp:
+Load  
+	[PROJECT_CODE],
+    min(FROM_DATE) as MIN_FIRST_SUBMISSION_FROM_DATE
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where len(FIRST_SUBMISSION_DATE)>0
+Group by [PROJECT_CODE]
+;
+Outer Join
+Load  
+	[PROJECT_CODE],
+    min(FROM_DATE) as MIN_FIRST_LAUNCH_FROM_DATE
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract\QVD\DIM_PLM_PROJECT_HIST.QVD] (qvd)
+Where len(FIRST_LAUNCH_DATE)>0
+Group by [PROJECT_CODE]
+;
+
+Left Join
+Load  
+	[PROJECT_CODE],
+    FIRST_SUBMISSION_DATE    			AS PREVIOUS_FIRST_SUBMISSION_DATE,
+    TO_DATE		         		    	AS PREVIOUS_FIRST_SUBMISSION_FROM_DATE
+Resident hist
+Where [hist.F_FIRST_SUBMISSION_DATE] = 1;
+
+Left Join
+Load  
+	[PROJECT_CODE],
+    FIRST_LAUNCH_DATE    				AS PREVIOUS_FIRST_LAUNCH_DATE,
+    TO_DATE		         		    	AS PREVIOUS_FIRST_LAUNCH_FROM_DATE
+Resident hist
+Where [hist.F_FIRST_LAUNCH_DATE] = 1;
+ 
+
+
+ 
+Left Join(PROJECT)
+LOAD distinct
+	[PROJECT_CODE] 							AS [PJT.Project Code],
+    DATE(PREVIOUS_FIRST_SUBMISSION_DATE)    AS [PJT.Previous Submission Date],
+    DATE(IF(ISNULL(PREVIOUS_FIRST_SUBMISSION_FROM_DATE),
+    	MIN_FIRST_SUBMISSION_FROM_DATE, PREVIOUS_FIRST_SUBMISSION_FROM_DATE))	AS [PJT.Submission From Date]
+Resident temp;
+    
+Left Join(PROJECT)
+LOAD distinct
+	[PROJECT_CODE] 							AS [PJT.Project Code],
+    DATE(PREVIOUS_FIRST_LAUNCH_DATE)    	AS [PJT.Previous Launch Date],
+    DATE(IF(ISNULL(PREVIOUS_FIRST_LAUNCH_FROM_DATE),
+    	MIN_FIRST_LAUNCH_FROM_DATE, PREVIOUS_FIRST_LAUNCH_FROM_DATE))		AS [PJT.Launch From Date]
+Resident temp;
+
+Drop Table hist,temp;
+///$tab Join Country Region to Project
+//04062021  Olga Voloshchuk
+//Join the Country region table directly to Project , to exclude the cases where non EU workpackages are conected to the different country than project itself. 
+
+
+left Join ([KeyTable])
+load Distinct
+[_PROJECT_KEY],
+[_PJT.REGION_COUNTRY_KEY] as [_REGION_COUNTRY_KEY_PROJECT],
+[_PJT.PRODUCT_KEY]	as [_PRODUCT_KEY_PRJ]
+Resident PROJECT
+//where [_PJT.REGION_COUNTRY_KEY] <> 1278
+;
+
+
+
+left Join ([KeyTable])
+load Distinct
+[_CNTRY.REGION_COUNTRY_KEY],
+[CNTRY.Region Name]  as [_CNTRY.Region Name Project] 
+Resident COUNTRY_REGION;
+
+
+left Join ([KeyTable])
+Load Distinct
+[_PROJECT_KEY],
+[_REGION_COUNTRY_KEY],
+[_PROJECT_KEY]&[_REGION_COUNTRY_KEY] as [_Project_reg_key],
+
+if( ([_REGION_COUNTRY_KEY_PROJECT]=1278 and [_CNTRY.Region Name Project]= 'Europe'), [_CNTRY.REGION_COUNTRY_KEY],[_REGION_COUNTRY_KEY_PROJECT]) as [_REGION_COUNTRY_KEY_PRJ]  
+ 
+
+
+Resident KeyTable;
+
+
+/*
+Inner Join(PROJECT)
+Load DISTINCT [_PROJECT_KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+*/
+
+DRop Field [_CNTRY.REGION_COUNTRY_KEY] from [KeyTable];
+DRop Field [_PRODUCT_KEY] from [KeyTable];
+DRop Field [_PDT.KEY] from [KeyTable];
+DRop Field [_REG_PDT.KEY] from [KeyTable];
+left Join ([KeyTable])
+load Distinct
+[_Project_reg_key],
+//[_PROJECT_KEY],
+[_REGION_COUNTRY_KEY_PRJ] as [_CNTRY.REGION_COUNTRY_KEY],
+[_PRODUCT_KEY_PRJ] as [_PRODUCT_KEY],
+[_PRODUCT_KEY_PRJ] as [_PDT.KEY],
+[_PRODUCT_KEY_PRJ]&'-'&[_REGION_COUNTRY_KEY_PRJ] as [_REG_PDT.KEY]
+
+Resident KeyTable
+//where [_REGION_COUNTRY_KEY_PR]=[_REGION_COUNTRY_KEY]
+
+;
+///$tab Source project Dev site
+//Spliting the Source project ID in case there are more than one
+T_Source:
+load Distinct
+[PJT.Project Code] ,
+left (TRIM([PJT.Source project ID]),9) as [First Source Project]
+Resident PROJECT
+ ;
+ 
+left join (T_Source)
+load Distinct
+ 
+[PJT.Project Code] as  [First Source Project],
+
+[PJT.Development site] as [PJT.Source project Dev.site]
+Resident PROJECT
+ ;
+ 
+ Left join (PROJECT)
+ load Distinct
+[PJT.Project Code] ,
+[PJT.Source project Dev.site]
+RESIDENT T_Source;
+DROP TABLE T_Source;
+
+ 
+///$tab Filters/Dimensions
+Set vSterileFilter = 
+if(WildMatch ([PJT.Development site],'*Zagreb*','*Runcorn*','*Bucharest*','*Nerviano*','*Godollo*','*Haarlem (PCH)*')>=1,'Yes',
+if(WildMatch ([PJT.Development site],'*Kfar*Saba*')>=1 and WildMatch ([PJT.Master dosage form],'Infusion Lyophilized Powder (Vial)',
+'Injectable LAR Solution',
+'Injectable PFS Solution (Syringe)',
+'Injectable Solution (SDV)',
+'Injectable Unknown',
+'Nasal Spray',
+'Nasal Suspension',
+'Nasal Suspension (Bottle)'
+)>=1,'Yes','No'
+
+
+)
+
+
+);
+
+set vBackGroundColorRisk  =  'if(even(max(total <[PJT.Project Code]>aggr(alt(max(Aggr(distinct RangeSum(Above(Count(DISTINCT [PJT.Project Code]), 0, RowNo())),([PJT.Project Code],(TEXT, ASCENDING)))),-999),[PJT.Project Code])))=-1,RGB(231, 230, 226),RGB(178, 177, 174))'
+;
+
+//Risk dashboard
+
+Left join (RISK)
+ load Distinct
+[_RISK.RISK_KEY] ,
+
+      Text(if ([Risk.Overall Score - GX]=1,'1'
+      , if ([Risk.Overall Score - GX]>=2 and [Risk.Overall Score - GX]<=4,'2-4'
+        , if ([Risk.Overall Score - GX]>=5 and [Risk.Overall Score - GX]<=12,'5-12'
+          , if ([Risk.Overall Score - GX]>=15 and [Risk.Overall Score - GX]<=24,'15-24'
+            , if ([Risk.Overall Score - GX]>=25 ,'25')))))) as [Risk.Overall Group]
+    
+    
+      
+RESIDENT RISK;
+
+ Left join (PROJECT)
+ load Distinct
+[PJT.Project Code] ,
+if (WildMatch([PJT.Development site],'Waterford*')>0,'Waterford'
+   ,if(WildMatch([PJT.Development site],'Ambernath*')>0,'Ambernath',
+     if( WildMatch([PJT.Development site],'Kfar-Saba*')>0,'Kfar-Saba'
+     ,if( WildMatch([PJT.Development site],'Salt Lake City (Actavis)*')>0, 'Salt Lake City (Actavis)',
+      if (WildMatch([PJT.Development site],'Weston*')>0,'Weston',
+      if ( WildMatch([PJT.Development site],'x *')>0,'External',[PJT.Development site]))))))   as   [PJT.Development Site Group]
+       
+RESIDENT PROJECT;
+
+
+
+left join (PROJECT)
+load Distinct
+[PJT.Project Code] ,
+if(WildMatch ([PJT.Development site],'*Zagreb*','*Runcorn*','*Bucharest*','*Nerviano*','*Godollo*','*Haarlem (PCH)*')>=1,'Sterile',
+if(WildMatch ([PJT.Development site],'*Kfar*Saba*')>=1 and WildMatch ([PJT.Master dosage form],'Infusion Lyophilized Powder (Vial)',
+'Injectable LAR Solution',
+'Injectable PFS Solution (Syringe)',
+'Injectable Solution (SDV)',
+'Injectable Unknown',
+'Nasal Spray',
+'Nasal Suspension',
+'Nasal Suspension (Bottle)'
+)>=1,'Sterile', if (wildmatch ( [PJT.Development Site Group],'Salt Lake City*', 'Larne*', 'Waterford', 'Troyan*'  )>0,'SSL','SOD'))) as [PJT.Function]
+    
+      
+RESIDENT PROJECT;
+
+MNFPKG:
+Load Distinct
+[PJT.Project Code],
+[PJT.Manufacturing Sites] as [Manufacturing/Packaging Sites]
+Resident PROJECT;
+
+Concatenate (MNFPKG)
+Load Distinct
+[PJT.Project Code],
+[PJT.Packaging Sites] as [Manufacturing/Packaging Sites]
+Resident PROJECT;
+
+left join (PROJECT)
+load Distinct
+[PJT.Project Code] ,
+'Y' as [_PJT.R&D Default filter]
+Resident PROJECT
+where 
+WildMatch(PJT.Business,'*Generics*')>0
+
+and [PJT.Project type]<>'IH Development – Full Leverage'
+and [PJT.Project type]<>'In-Licensing'
+and (PJT.Status='Active' or PJT.Status='Preliminary Work Approved');
+
+
+
+///$tab Risk History
+[Risk History]:
+LOAD
+PLM_ONB				      as    [_Risk Hist.PLM ONB],
+PROJECT	                  as    [PJT.Project Code],
+OVERALL_SCORE_GX	      as    [Risk Hist.Overall Score Gx],
+IMPACT_GX_AS_A_NUMBER     as    [Risk Hist.Impact Gx As A Number],
+PROBABILITY_SP			  as    [Risk Hist.Probability Sp],
+if (DISPLAY_IN_REPORT=1, 'YES','NO')       as    [Risk Hist.Display in Report],
+date(FROM_DATE)           as    [Risk Hist.From Date],
+IF(DELETED='Y',date(DELETED_DATE),	date(TO_DATE)	)	      as    [Risk Hist.To Date],
+VERSION				      as    [Risk Hist.Version],
+ACT_IND				      as    [Risk Hist.Act Ind],
+DELETED				      as    [Risk Hist.Deleted],
+DELETED_DATE			  as    [Risk Hist.Deleted Date],
+IND_OVERALL_SCORE_GX	  as    [Risk Hist.Ind Overall Score Gx],
+IND_IMPACT_GX_AS_A_NUMBER as    [Risk Hist.Ind Impact Gx As A Number],
+IND_PROBABILITY_SP		  as    [Risk Hist.Ind Probability Sp],
+IMPACT_SP				  as    [Risk Hist.Impact Sp],
+SCORE				      as    [Risk Hist.Score],
+IND_IMPACT_SP			  as    [Risk Hist.Ind Impact Sp],
+IND_SCORE				  as    [Risk Hist.Ind Score],
+IND_DISPLAY_IN_REPORT     as    [Risk Hist.Ind Display in Report],
+PLM_ONB&'|'&VERSION	      as    [_Risk Hist.Calendar Key]
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract/QVD/DIM_PLM_RISK_HISTORY.QVD]
+(qvd);
+
+left join ([Risk History])
+load Distinct
+[_Risk Hist.PLM ONB] ,
+[Risk Hist.Version],
+      Text(if ([Risk Hist.Overall Score Gx]=1,'1'
+      , if ([Risk Hist.Overall Score Gx]>=2 and [Risk Hist.Overall Score Gx]<=4,'2-4'
+        , if ([Risk Hist.Overall Score Gx]>=5 and [Risk Hist.Overall Score Gx]<=12,'5-12'
+          , if ([Risk Hist.Overall Score Gx]>=15 and [Risk Hist.Overall Score Gx]<=24,'15-24'
+            , if ([Risk Hist.Overall Score Gx]>=25 ,'25')))))) as [Risk Hist.Overall Group]
+    
+RESIDENT [Risk History];
+
+
+
+TempCalendar: 
+Load 
+ TempDate AS OrderDate, 
+ week(TempDate) As Week, 
+ Year(TempDate) As Year, 
+ Month(TempDate) As Month, 
+ Day(TempDate) As Day, 
+ 'Q' & ceil(month(TempDate) / 3) AS Quarter, 
+ Week(weekstart(TempDate)) & '-' & WeekYear(TempDate) as WeekYear, 
+ WeekDay(TempDate) as WeekDay ,
+ MonthEnd(TempDate) as EndMonth
+ 
+;
+
+//=== Generate a temp table of dates === 
+LOAD 
+ date(mindate + IterNo()) AS TempDate
+ ,maxdate // Used in InYearToDate() above, but not kept 
+WHILE mindate + IterNo() <= maxdate;
+
+//=== Get min/max dates from Field ===/
+LOAD
+ AddMonths(MonthEnd(Today()),-12) as mindate,
+ Today() as maxdate
+AUTOGENERATE (2);
+
+
+NoConcatenate
+MinHistRiskDate:
+Load
+Min([Risk Hist.From Date]) as _MinRiskHistDate
+Resident [Risk History];
+
+left Join ( TempCalendar)
+load
+_MinRiskHistDate
+Resident MinHistRiskDate;
+Drop table MinHistRiskDate;
+NoConcatenate
+Calendar:
+Load
+distinct
+if(Month(EndMonth)=Month(Today()-1),Today(),EndMonth)  as EndMonth
+Resident TempCalendar
+where EndMonth>= Date(Date#('20230201','YYYYMMDD'),'DD/MM/YYYY') 
+//and EndMonth<= YearEnd(Today()-1)
+;
+Drop Table TempCalendar;
+
+NoConcatenate
+
+Temp:
+Load Distinct
+ [_Risk Hist.Calendar Key],
+ [Risk Hist.From Date] as [From Date],
+ [Risk Hist.To Date] as [To Date]
+ Resident [Risk History];
+ 
+
+inner join (Calendar)
+
+
+IntervalMatch (EndMonth)
+
+
+LOAD [From Date], [To Date]
+
+
+Resident Temp;
+
+NoConcatenate
+CalendarT1:
+Load Distinct
+[_Risk Hist.Calendar Key],
+[From Date],
+[To Date]
+Resident Temp;
+Drop Table Temp;
+
+left Join
+(CalendarT1)
+Load Distinct
+[From Date]
+,[To Date]
+,if(Month(EndMonth)=Month(Today()-1),Today()-1,EndMonth)  as EndMonth
+Resident Calendar;
+Drop table Calendar; Rename Table CalendarT1 to Calendar;
+
+//Drop Table Calendar;
+
+///$tab TOP Project report
+TOP_PROJECT_RDA:
+Load 
+PROJECT_CODE as   [PJT.Project Code],
+Round(ENPV,0.01)
+	as [PJT.RDA eNPV],	
+Round(NPV, 0.01)	    as [PJT.RDA NPV],
+Round(TENY_POST_LAUNCH_NS, 0.01)		as [PJT.RDA 10Y Post Launch NS],
+E2E_PROJECT_LEAD          as [PJT.RDA E2E Project lead],
+R_D_PL as [PJT.R&D PL],
+PORTFOLIO_GLOBAL as [PJT.Portfolio Global ],
+PORTFOLIO_US as [PJT.Portfolio US],
+PORTFOLIO_IM as [PJT.Portfolio IM],
+PORTFOLIO_EU as [PJT.Portfolio EU ],
+GPIO as [PJT.GPIO],
+RA as [PJT.RA ],
+QA as [PJT.QA],
+PROCUREMENT as [PJT.Procurement ],
+CMC_LEAD as [PJT.CMC lead],
+FINANCE as [PJT.Finance ],
+LEGAL as [PJT.Legal ],
+MS_T as [PJT.MS&T],
+DEVICE as [PJT.Device ],
+CLINICAL as [PJT.Clinical]
+
+
+//EROI	as 	[PJT.RDA eROI]
+
+
+
+
+
+
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract/QVD/DIM_RD_RDA_TOPPROJECT.QVD]
+(qvd);
+
+[Source projects for Top Projects]:
+Load distinct
+[PJT.Source project ID] as [PJT.Project Code],
+Concat(distinct [PJT.Project Code],',') as [PJT.INCLUDED PROJECT_ID]
+Resident PROJECT
+where PJT.Status<>'Cancelled'
+group by [PJT.Source project ID];
+
+
+left join (TOP_PROJECT_RDA)
+LOAD distinct
+    PROJECT_CODE as [PJT.Project Code],
+    date(FIRST_SUBMISSION_DATE) as [PJT.Submission Date Fixed],
+
+    date(FIRST_APPROVAL_DATE) as [PJT.Approval Date Fixed],
+
+    date(FIRST_LAUNCH_DATE) as [PJT.Launch Date Fixed]
+
+FROM [lib://PLM (tevacorp_admqlik)/1.Extract/QVD/DIM_Fixed_Dates_RDA.QVD]
+(qvd);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///$tab Process Report
+LIB CONNECT TO 'GLBIPRD_OLE_DB (tevacorp_admqlik)';
+
+SQL UPDATE MBIDW_MNG.PROCESS_REPORT T 
+SET 
+DW2=1,
+DW2_DATE=SYSDATE,
+READY_FOR_DWH=1,
+READY_FOR_DWH_DATE=SYSDATE
+WHERE PROCESS_NAME='MBI_QS_RD_GENERICS_PLM'
+AND T.STARTING_DATE=
+(   
+    SELECT MAX(STARTING_DATE)
+    FROM MBIDW_MNG.PROCESS_REPORT
+    WHERE PROCESS_NAME='MBI_QS_RD_GENERICS_PLM'
+
+);
+
+SQL COMMIT;
+
+
+
+///$tab Exit
+TRACE Dropping Tables;
+Drop Tables FACT_GM_PROJECT_TARGET, FACT_GM_CNTRY_TARGET, SKU, Target_Calendar_Subm_AOP, Target_Calendar_Launch_AOP;
+
+//	2018-10-22	RSYSIUK	Not 'Speciality'
+Inner Join(KeyTable)
+Load DISTINCT [_REGION_COUNTRY_KEY]
+Resident KeyTable
+Where [_REGION_COUNTRY_KEY] <> 1289;
+
+Inner Join(PROJECT)
+Load DISTINCT [_PROJECT_KEY]
+Resident KeyTable
+Where [_PROJECT_KEY] > 0;
+
+Inner Join(PRODUCT)
+Load DISTINCT [_PDT.KEY]
+Resident KeyTable
+Where [_PDT.KEY] > 0;
+
+Inner Join(WORKPACKAGE)
+Load DISTINCT [_WP.KEY]
+Resident KeyTable
+Where [_WP.KEY] > 0;
+
+Inner Join(TASK_WP)
+Load DISTINCT [_WP.KEY]
+Resident KeyTable
+Where [_WP.KEY] > 0;
+
+Inner Join(bridge_table)
+Load DISTINCT [_AuthID]
+Resident KeyTable;
+
+//04062021  Olga Voloshchuk    removing not existing projects from PLM see Exit Sections
+
+inner join (PROJECT)
+load Distinct 
+[_PJT.KEY]
+Resident [PROJECT]
+where [_PJT.IS_IN_SOURCE_SYSTEM]=1;
+
+//Join the Country region table directly to Project , to exclude the cases where non EU workpackages are conected to the different country than project itself.
+
+//DRop Field [_CNTRY.REGION_COUNTRY_KEY] from [KeyTable];
+
+exit Script;
+
+exit script;
+///$tab DATA_ACCURACY_old
+/*DATA_ACCURACY:
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing dev. site' as [Data_Acc.ErrorType1]
+,'Missing dev. site'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where [PJT.DEVELOPMENT_SITE_FLAG]>0;
+
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing (first) subm. date' as [Data_Acc.ErrorType1]
+,'Missing (first) subm. date'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.FIRST_SUBMISSION_DATE_FLAG]>0
+; 
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing mfg. site' as [Data_Acc.ErrorType1]
+,'Missing mfg. site'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MANUFACTURING_SITE_FLAG]>0
+; 
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing GR&D project contact' as [Data_Acc.ErrorType1]
+,'Missing GR&D project contact'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.PROJECT_MANAGERS_FLAG]>0
+; 
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing exclusivity status for US only' as [Data_Acc.ErrorType1]
+,'Missing exclusivity status for US only'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.EXCLUSIVITY_STATUS_FLAG_US]>0
+; 
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing R&D tri-weekly comments' as [Data_Acc.ErrorType1]
+,'Missing R&D tri-weekly comments'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.BIWEEKLY_COMMENTS_FLAG]>0
+;
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS-submission batch mng' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS-submission batch mng'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MISTAKES_SUB_BATCH_DATE_FLAG]>0
+;
+
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS-bio start' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS-bio start'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MISTAKES_BIO_START_FLAG]>0
+and
+isnull([PJT.No Bio Study Required]); 
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS-final bio report' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS-final bio report'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MISTAKES_FINAL_BIO_RPT_FLAG]>0
+and
+isnull([PJT.No Bio Study Required]); 
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS-submission date' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS-submission date'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MISTAKES_SUBMISSION_DATE_FLAG]>0
+;
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS-stability 1st' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS-stability 1st'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.MISTAKES_STABILTY_DATE_FLAG]>0
+;
+
+
+
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Missing Kick-off Date' as [Data_Acc.ErrorType1]
+,'Missing Kick-off Date'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.Missing Kick-off Date Flag]>0
+;
+
+Concatenate (DATA_ACCURACY)
+Load 
+[PJT.Project Code],
+[PJT.Project Code] as [Data_Acc.Project Code error],
+'Mistakes in Project MS- kick off date' as [Data_Acc.ErrorType1]
+,'Mistakes in Project MS- kick off date'&[PJT.Project Code] as Key_Code
+,1 as count_row
+,[_PJT.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1
+Resident [PROJECT]
+where 
+[PJT.Expired Kick-off Date Flag]>0
+;
+
+Left Join(DATA_ACCURACY)
+Load distinct
+[_CNTRY.REGION_COUNTRY_KEY] as REGION_COUNTRY_KEY1,
+[CNTRY.Market] as [Data_Acc.Market]
+Resident COUNTRY_REGION
+;
+*/
+//adding Market column from COUNTRY_Region table to the Project table o.voloshchuk
+
+Left Join(PROJECT)
+Load distinct
+[_CNTRY.REGION_COUNTRY_KEY] as [_PJT.REGION_COUNTRY_KEY],
+[CNTRY.Market] as [PJT.Market]
+Resident COUNTRY_REGION
+;
+//Adding 1st HiH initiation to the Project 
+
+Left join (PROJECT)
+load Distinct
+ [_PROJECT_KEY] as [_PJT.KEY]
+ ,[MLSTN.First Planned Date] as [PJT.1st HiH initiation Date]
+
+Resident MILESTONES
+where Upper([MLSTN.Name])='HIH INITIATION'
+;
+
+//Adding 1st HiH initiation to the Project 
+
+Left join (PROJECT)
+load Distinct
+ [_PROJECT_KEY] as [_PJT.KEY]
+ ,[MLSTN.First Planned Date] as [PJT.1st HiH initiation Plan Date]
+ ,[MLSTN.First Actual Date] as [PJT.1st HiH initiation Actual Date]
+
+Resident MILESTONES
+where Upper([MLSTN.Name])='HIH INITIATION'
+;
+//Adding 1st Handover to the Project 
+
+Left join (PROJECT)
+load Distinct
+ [_PROJECT_KEY] as [_PJT.KEY]
+ ,[MLSTN.First Planned Date] as [PJT.1st Handover Plan Date]
+ ,[MLSTN.First Actual Date] as [PJT.1st Handover Actual Date]
+
+Resident MILESTONES
+where Upper([MLSTN.Name])='HANDOVER'
+;
+//adding flags 
+Left Join (PROJECT)
+load Distinct
+[_PJT.KEY]
+//Missing HiH Initiation date
+, if (
+IsNull(Alt([PJT.1st HiH initiation Plan Date],[PJT.1st HiH initiation Actual Date]) )
+and [PJT.Progress]<>'Launched' and WildMatch([PJT.Project type],'IH Development – Original','Co-Development')>0 ,1,0
+) as [PJT.flag Missing HiH Initiation date]
+//Mistakes in Project MS- HiH Initiation
+, if (
+IsNull([PJT.1st HiH initiation Actual Date] ) and [PJT.1st HiH initiation Plan Date]<Today()
+and [PJT.Progress]<>'Launched' and WildMatch([PJT.Project type],'IH Development – Original','Co-Development')>0 ,1,0
+) as [PJT.flag Mistakes in Project MS- HiH Initiation]
+//Missing Handover date
+, if (
+IsNull(Alt([PJT.1st Handover Plan Date],[PJT.1st Handover Actual Date]) )
+and [PJT.Progress]<>'Launched' and WildMatch([PJT.Project type],'IH Development – Original','Co-Development')>0,1,0
+) as [PJT.flag Missing Handover date]
+//Mistakes in Project MS- Handover
+, if (
+IsNull([PJT.1st Handover Actual Date]) and [PJT.1st Handover Plan Date]<Today()
+and [PJT.Progress]<>'Launched' and WildMatch([PJT.Project type],'IH Development – Original','Co-Development')>0 ,1,0
+) as [PJT.flag Mistakes in Project MS- Handover]
+Resident PROJECT
+
+;
+
+// 
+/*
+Qualify *;
+Unqualify [_PROJECT_KEY];
+
+temp_project:
+load
+[_PROJECT_KEY],
+[PJT.Project Code] as [PJT.Project Code temp]
+Resident [PROJECT];
+left join (temp_project)
+Load 
+[_PROJECT_KEY]
+,[PJT.Project Code error]
+,ErrorType1
+,Key_Code
+
+Resident DATA_ACCURACY;
+
+Unqualify *;*/
